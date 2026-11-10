@@ -1,0 +1,8 @@
+*.wav
+*.npy
+*.npz
+*.parquet
+adsb/
+dem_tiles/
+__pycache__/
+.venv/

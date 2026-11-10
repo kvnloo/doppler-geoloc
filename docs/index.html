@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Inaudible planes → location: a Doppler/ADS-B recreation</title>
+<meta name="description" content="Open recreation of colsto's experiment: find inaudible propeller-plane Doppler curves in a recording and match them against ADS-B flight tracks.">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{--bg:#0c0c0a;--fg:#e8e6df;--mute:#9a978d;--line:rgba(255,255,255,.12);--gold:#ffd166;--cyan:#5ee6ff;--red:#ff6b6b}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:980px;margin:0 auto;padding:40px 20px 80px}
+h1{font-size:clamp(28px,5vw,44px);line-height:1.1;margin:0 0 12px;letter-spacing:-.02em}
+h2{font-size:22px;margin:56px 0 12px;letter-spacing:-.01em}
+p{color:#cfccc3}a{color:var(--cyan)}.mute{color:var(--mute)}
+.lede{font-size:18px;color:#d9d6cc;max-width:720px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:28px 0}
+.stat{border:1px solid var(--line);border-top-color:rgba(255,255,255,.2);border-radius:14px;padding:14px 16px;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.015))}
+.stat b{display:block;font-size:26px;font-variant-numeric:tabular-nums}.stat span{font-size:13px;color:var(--mute)}
+.card{border:1px solid var(--line);border-radius:16px;padding:18px;background:rgba(255,255,255,.025);margin:16px 0}
+img{max-width:100%;border-radius:10px;display:block}
+.callout{border-left:3px solid var(--gold);padding:10px 16px;background:rgba(255,209,102,.06);border-radius:0 12px 12px 0}
+.callout.warn{border-color:var(--red);background:rgba(255,107,107,.06)}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:14px}
+td,th{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left}th{color:var(--mute);font-weight:500}
+.funnel .row{display:grid;grid-template-columns:1fr 130px;gap:10px;align-items:center;margin:6px 0;font-size:14px}
+.bar{height:10px;border-radius:6px;background:linear-gradient(90deg,var(--cyan),var(--gold));margin-top:4px}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+#map{height:420px;border-radius:14px}
+.ctl{display:grid;grid-template-columns:110px 1fr 70px;gap:10px;align-items:center;font-size:14px;margin:6px 0}
+input[type=range]{width:100%;accent-color:var(--gold)}
+canvas{width:100%;height:260px;border-radius:10px;background:#000}
+code{background:rgba(255,255,255,.07);padding:1px 5px;border-radius:5px;font-size:.92em}
+pre{background:#000;border:1px solid var(--line);border-radius:12px;padding:14px;overflow:auto;font-size:13px}
+ol li,ul li{margin:6px 0;color:#cfccc3}
+footer{margin-top:64px;color:var(--mute);font-size:13px}
+</style>
+</head>
+<body><main>
+<p class="mute">open recreation · real audio · real ADS-B · nov 2026</p>
+<h1>Planes you can't hear, used to find where a video was recorded</h1>
+<p class="lede">YouTuber <a href="https://www.youtube.com/watch?v=UytYrhYLOKI">colsto</a> showed that faint propeller-plane tones in a recording's background form Doppler curves, and that matching those curves against public flight-tracking data (ADS-B) can locate the recording to about 100 m (<a href="https://www.ibtimes.co.uk/inaudible-aircraft-sounds-reveal-recording-location-1829800">IBTimes</a>). He released no code. This is an independent rebuild of the pipeline, run on his published raw recording and the full ADS-B archive for the day.</p>
+
+<div class="stats" id="stats"></div>
+
+<div class="callout warn"><b>Status: partial reproduction.</b> The first three stages reproduce: two Doppler curves fitted under 1 Hz error, gap 917 s vs his 920 s, and the national candidate search plus silence filter run end to end. The final scoring did not produce a single clear winner: the top locations score within a few percent of each other. Details and next steps are below.</div>
+
+<h2>1 · The sound nobody hears</h2>
+<p>The recording is an hour of trees, birds and wind. Whiten the spectrogram (remove each frequency's steady background) and look at 60–260 Hz: two descending S-curves appear, marked by the dashed lines.</p>
+<div class="card"><img src="assets/overview.png" alt="spectrogram overview with two Doppler curves marked" loading="lazy"></div>
+
+<h2>2 · Each curve encodes speed and distance</h2>
+<p>For a source flying straight at constant speed <i>v</i>, the heard pitch slides from <i>f₀/(1−v/c)</i> down to <i>f₀/(1+v/c)</i>. The size of the drop gives the speed; how <em>quickly</em> it drops gives the closest slant distance. Try it:</p>
+<div class="card">
+ <div class="ctl"><label>speed</label><input id="v" type="range" min="30" max="170" value="97"><span id="vv" class="num"></span></div>
+ <div class="ctl"><label>closest dist.</label><input id="d" type="range" min="100" max="8000" step="50" value="2480"><span id="dv" class="num"></span></div>
+ <div class="ctl"><label>engine tone f₀</label><input id="f" type="range" min="60" max="250" value="133"><span id="fv" class="num"></span></div>
+ <canvas id="cv" width="900" height="260"></canvas>
+ <p class="mute" style="font-size:13px;margin:8px 0 0">yellow: your curve · cyan dots: event 2 as tracked in the real recording. Sound propagation delay is modelled (emission time ≠ reception time).</p>
+</div>
+<p>Each real curve is ridge-tracked on the spectrogram and fitted by least squares:</p>
+<div class="card"><img src="assets/e1.png" alt="event 1 spectrogram and fit" loading="lazy"><p class="mute" style="font-size:13px">event 1</p>
+<img src="assets/e2.png" alt="event 2 spectrogram and fit" loading="lazy"><p class="mute" style="font-size:13px">event 2</p></div>
+<table id="evt"></table>
+
+<h2>3 · Search the whole country</h2>
+<p>ADS-B archive for 8 Sep 2026 (<a href="https://github.com/adsblol/globe_history_2026">adsb.lol</a>, 3.9 GB), known jets removed. Every flight point is interpolated to 1 s. For each 200 m ground cell we compute when the closest approach would have been <em>heard</em>, using the 3D slant distance (terrain elevation from a national elevation model, since ADS-B altitude is above sea level) and the speed of sound.</p>
+<div class="card funnel" id="funnel"></div>
+<p class="mute" style="font-size:14px">colsto reported ~73,000 → ~15,000 at the equivalent stages. Our counts are larger because our speed and distance windows are deliberately wider.</p>
+
+<h2>4 · Score and rank</h2>
+<p>For each surviving cell, the real flight trajectory is replayed: the Doppler curve that position would have heard is predicted, then compared against the recording with one shared time offset across both events (colsto's "locked two-event" score) and a free engine pitch per event.</p>
+<div class="card"><div id="map"></div><p class="mute" style="font-size:13px;margin:8px 0 0">Top 25 distinct flight pairs, coordinates rounded to ~1 km. Gold = rank 1.</p></div>
+<table id="top"></table>
+<div class="callout" id="verdict"></div>
+
+<h2>What's missing</h2>
+<ol>
+<li><b>Tighter event windows.</b> colsto measured each curve's speed and distance range by hand. Ours are deliberately generous, so many more flight pairs qualify.</li>
+<li><b>Whole-hour silence.</b> The silence filter currently covers only the gap between the events and only prop aircraft. The full hour, with jets and helicopters, would prune far more.</li>
+<li><b>Trajectory detail.</b> Scoring on raw ADS-B with turns and climbs, plus harmonics, is the part colsto says separates 15,000 candidates down to one.</li>
+<li><b>Date boundary.</b> Only the 8 Sep UTC archive was used. A recording in a US evening falls partly in 9 Sep UTC.</li>
+</ol>
+
+<h2>Run it</h2>
+<pre>git clone https://github.com/kvnloo/doppler-geoloc && cd doppler-geoloc/pipeline
+uv venv && uv pip install numpy scipy pandas pyarrow soundfile matplotlib pillow
+# see pipeline/README.md for the stage order and data downloads</pre>
+
+<h2>Privacy note</h2>
+<p>The technique is real but narrow: it needs audible-to-a-spectrogram prop traffic, good ADS-B coverage and a known date. Cutting the audio, heavy noise suppression or removing the low band defeats it more reliably than a simple high-pass, per colsto's tests. This site shows only rounded candidate locations and does not identify any camera.</p>
+
+<footer>Audio © its uploader, analysed but not redistributed. ADS-B data: adsb.lol (ODbL/CC0). Terrain: AWS Terrain Tiles. Method: colsto. This rebuild: <a href="https://github.com/kvnloo/doppler-geoloc">github.com/kvnloo/doppler-geoloc</a>.</footer>
+</main>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const fmt=n=>n.toLocaleString('en-US');
+fetch('assets/results.json').then(r=>r.json()).then(R=>{
+ const E=R.events;
+ document.getElementById('stats').innerHTML=[
+  [R.gap_s+' s','gap between curves (colsto: '+R.gap_colsto_s+' s)'],
+  [E.e1.speed_ms+' / '+E.e2.speed_ms,'fitted speeds, m/s'],
+  [(E.e1.cpa_slant_m/1000).toFixed(1)+' / '+(E.e2.cpa_slant_m/1000).toFixed(1)+' km','closest slant distances'],
+  [fmt(R.funnel[0].n),'ADS-B points searched']].map(([b,s])=>`<div class="stat"><b>${b}</b><span>${s}</span></div>`).join('');
+ document.getElementById('evt').innerHTML='<tr><th>event</th><th>heard at</th><th>speed</th><th>slant dist.</th><th>f₀</th><th>fit rms</th></tr>'+
+  ['e1','e2'].map(k=>`<tr><td>${k}</td><td>${E[k].heard_cpa_s} s</td><td>${E[k].speed_ms} m/s</td><td>${fmt(E[k].cpa_slant_m)} m</td><td>${E[k].f0_hz} Hz</td><td>${E[k].rms_hz} Hz</td></tr>`).join('');
+ const mx=Math.log10(R.funnel[2].n);
+ document.getElementById('funnel').innerHTML=R.funnel.map(s=>`<div class="row"><div>${s.stage}<div class="bar" style="width:${Math.max(2,100*Math.log10(s.n)/mx)}%"></div></div><div class="num">${fmt(s.n)}</div></div>`).join('')+'<p class="mute" style="font-size:12px">bar length is log-scaled</p>';
+ const T=R.top_candidates;
+ document.getElementById('top').innerHTML='<tr><th>#</th><th>lat, lon (≈1 km)</th><th>spectrogram score</th><th>fit rms</th></tr>'+
+  T.slice(0,10).map(c=>`<tr><td>${c.rank}</td><td>${c.lat}, ${c.lon}</td><td>${c.score}</td><td>${c.lsq_rms_hz} Hz</td></tr>`).join('');
+ const s=R.top_scores, sep=((s[0]-s[1])/s[0]*100).toFixed(1);
+ document.getElementById('verdict').innerHTML=`<b>No clear winner.</b> Rank 1 beats rank 2 by only ${sep}% (${s.join(' · ')}), and the top places are spread across several states. colsto's winner stood well clear of the field. Press reports name ${R.reported_area.name.replace(' (as named in press)','')}: candidates there survive every filter, and the best ranks <b>#${R.reported_area.best_rank}</b> (score ${R.reported_area.best_score}). That town was used only to grade the result, never to steer the search.`;
+ const map=L.map('map',{scrollWheelZoom:false}).setView([38.5,-96],4);
+ L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'© OpenStreetMap © CARTO',maxZoom:12}).addTo(map);
+ T.forEach((c,i)=>L.circleMarker([c.lat,c.lon],{radius:i?6:10,color:i?'#5ee6ff':'#ffd166',weight:2,fillOpacity:.5}).bindPopup(`#${c.rank} · score ${c.score}`).addTo(map));
+ window.__ev2=E.e2;
+ fetch('assets/e2_track.json').then(r=>r.json()).then(p=>{window.__pts=p;draw()});
+});
+const C=343,cv=document.getElementById('cv'),cx=cv.getContext('2d');
+function curve(f0,v,d,t){ // reception-time t rel. heard CPA
+ let lo=-600,hi=600; const tr=tau=>tau+Math.hypot(v*tau,d)/C-d/C;
+ for(let i=0;i<50;i++){const m=(lo+hi)/2; if(tr(m)<t)lo=m;else hi=m}
+ const tau=(lo+hi)/2,r=Math.hypot(v*tau,d),vt=-v*v*tau/r; return f0/(1-vt/C)}
+function draw(){
+ const v=+vv_in.value,d=+dv_in.value,f0=+fv_in.value;
+ vv.textContent=v+' m/s';dv.textContent=(d/1000).toFixed(2)+' km';fv.textContent=f0+' Hz';
+ const W=cv.width,H=cv.height,fmin=60,fmax=260,X=t=>(t+120)/240*W,Y=f=>H-(f-fmin)/(fmax-fmin)*H;
+ cx.fillStyle='#000';cx.fillRect(0,0,W,H);cx.strokeStyle='#222';cx.fillStyle='#777';cx.font='12px sans-serif';
+ for(let f=80;f<=240;f+=40){cx.beginPath();cx.moveTo(0,Y(f));cx.lineTo(W,Y(f));cx.stroke();cx.fillText(f+' Hz',4,Y(f)-3)}
+ for(let t=-100;t<=100;t+=50){cx.beginPath();cx.moveTo(X(t),0);cx.lineTo(X(t),H);cx.stroke();cx.fillText(t+' s',X(t)+3,H-4)}
+ if(window.__pts){cx.fillStyle='#5ee6ff';__pts.forEach(([t,f])=>cx.fillRect(X(t)-1,Y(f)-1,2,2))}
+ cx.strokeStyle='#ffd166';cx.lineWidth=2;cx.beginPath();
+ for(let i=0;i<=300;i++){const t=-120+i*0.8,f=curve(f0,v,d,t);i?cx.lineTo(X(t),Y(f)):cx.moveTo(X(t),Y(f))}cx.stroke()}
+const vv_in=document.getElementById('v'),dv_in=document.getElementById('d'),fv_in=document.getElementById('f');
+const vv=document.getElementById('vv'),dv=document.getElementById('dv'),fv=document.getElementById('fv');
+[vv_in,dv_in,fv_in].forEach(e=>e.addEventListener('input',draw));draw();
+</script>
+</body></html>

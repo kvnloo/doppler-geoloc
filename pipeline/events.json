@@ -1,0 +1,8 @@
+{
+  "_source": "track_fit.py fits on full.wav (youtu.be/4CxVxuMVkMc); e1 v=142.0 d=6591 tc=2156.29, e2 v=96.6 d=2478 tc=3073.49 (rms 0.35/0.72 Hz); ranges are generous",
+  "e1": {"v": [110, 175], "d": [3500, 10000], "tc": 2156.29},
+  "e2": {"v": [78, 118], "d": [1500, 4000], "tc": 3073.49},
+  "dt": 917.2,
+  "dt_tol": 10,
+  "silence_radius_m": 2000
+}
