@@ -15,6 +15,10 @@ Open recreation of [colsto's experiment](https://www.youtube.com/watch?v=UytYrhY
 
 The press-named area (Oyster Bay, NY) survives every filter, but its best candidate ranks #129. That town was used only to grade the result, never as a search prior. See the demo's "What's missing" section for the likely gaps.
 
+## Other geolocation methods
+
+[`docs/methods.html`](https://kvnloo.github.io/doppler-geoloc/methods.html) is an interactive tour of the other channels that give away where media was recorded: EXIF metadata, sun and shadows, skyline from elevation data, mains hum (ENF), and visual matching. Every demo runs client-side; chosen files never leave the browser.
+
 ## Layout
 
 - `pipeline/`: the stages, run in order from a work dir holding the audio and ADS-B data. See [`pipeline/README.md`](pipeline/README.md).

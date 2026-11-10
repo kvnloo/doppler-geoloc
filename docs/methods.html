@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Where was this taken? Ways to geolocate photos, video and audio</title>
+<meta name="description" content="Interactive tour of the channels that give away where media was recorded: metadata, sun and shadows, skyline, mains hum, aircraft Doppler, and visual matching. Every demo runs in your browser.">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{--bg:#0c0c0a;--fg:#e8e6df;--mute:#9a978d;--line:rgba(255,255,255,.12);--gold:#ffd166;--cyan:#5ee6ff;--red:#ff6b6b;--green:#7ee08a}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:980px;margin:0 auto;padding:40px 20px 80px}
+h1{font-size:clamp(28px,5vw,44px);line-height:1.1;margin:0 0 12px;letter-spacing:-.02em}
+h2{font-size:22px;margin:56px 0 8px;letter-spacing:-.01em}h2 small{color:var(--mute);font-weight:400;font-size:14px;margin-left:6px}
+p{color:#cfccc3}a{color:var(--cyan)}.mute{color:var(--mute)}
+.lede{font-size:18px;color:#d9d6cc;max-width:740px}
+.card{border:1px solid var(--line);border-top-color:rgba(255,255,255,.2);border-radius:16px;padding:18px;background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.015));margin:16px 0}
+.callout{border-left:3px solid var(--gold);padding:10px 16px;background:rgba(255,209,102,.06);border-radius:0 12px 12px 0}
+.callout.warn{border-color:var(--red);background:rgba(255,107,107,.06)}
+table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{color:var(--mute);font-weight:500}
+.map{height:340px;border-radius:12px;background:#111;margin-top:12px}.dark-tiles{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9)}
+.row{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;font-size:14px;margin:8px 0}
+.row label{color:var(--mute)}input,button{font:inherit;color:var(--fg);background:#16160f;border:1px solid var(--line);border-radius:9px;padding:6px 10px}
+input[type=number]{width:96px}button{cursor:pointer;border-color:rgba(255,209,102,.5)}button:hover{background:#221f12}
+input[type=file]{max-width:100%}
+canvas{width:100%;border-radius:10px;background:#000;display:block;margin-top:12px}
+.out{font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;background:#000;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:12px;white-space:pre-wrap;word-break:break-word;color:#d7d4ca}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.grid .card{margin:0}.grid h3{margin:0 0 6px;font-size:17px}.grid p{margin:0;font-size:14px}
+.tag{display:inline-block;font-size:12px;border:1px solid var(--line);border-radius:999px;padding:1px 8px;color:var(--mute);margin-left:4px}
+.tag.live{border-color:rgba(126,224,138,.5);color:var(--green)}
+nav.top{display:flex;gap:16px;font-size:14px;margin-bottom:28px}
+footer{margin-top:64px;color:var(--mute);font-size:13px}
+@media(max-width:600px){.glance td:nth-child(2),.glance th:nth-child(2){display:none}.out{font-size:12px}}
+</style>
+</head>
+<body><main>
+<nav class="top"><a href="./">← Aircraft-Doppler experiment</a><span class="mute">·</span><span>Geolocation methods</span></nav>
+<p class="mute">explainer · six channels · every demo runs in your browser</p>
+<h1>Where was this taken?</h1>
+<p class="lede">A photo, video or audio clip usually reveals where it was made through several independent channels. Each one narrows the search a different amount. Investigators combine them: one rules out a continent, another picks a valley, a third picks the street.</p>
+
+<div class="callout warn"><b>Use this on your own media, or for verification and journalism.</b> These are standard open-source investigation (OSINT) techniques. Using them to find a private person's home is stalking. Nothing you load on this page is uploaded; all processing stays in your browser.</div>
+
+<h2>The channels at a glance</h2>
+<div class="card" style="overflow-x:auto">
+<table class="glance">
+<tr><th>Channel</th><th>What it needs</th><th>Typical result</th><th>Demo</th></tr>
+<tr><td>1 · File metadata (EXIF)</td><td>the original file</td><td>exact point, if present</td><td><a href="#exif">try it</a></td></tr>
+<tr><td>2 · Sun and shadows</td><td>a shadow, a time</td><td>a circle on the globe; a point if the shadow's compass direction is known</td><td><a href="#sun">try it</a></td></tr>
+<tr><td>3 · Skyline and terrain</td><td>a visible horizon</td><td>a valley, sometimes a viewpoint</td><td><a href="#skyline">try it</a></td></tr>
+<tr><td>4 · Mains hum (ENF)</td><td>audio near mains power</td><td>50 Hz or 60 Hz grid → region; with grid logs, the time</td><td><a href="#enf">try it</a></td></tr>
+<tr><td>5 · Aircraft Doppler</td><td>audio + flight-tracking data</td><td>a short list of places; a point with a clock</td><td><a href="#doppler">results</a></td></tr>
+<tr><td>6 · Visual matching</td><td>a street-level photo</td><td>country → street, depending on reference imagery</td><td><a href="#visual">how it works</a></td></tr>
+</table>
+</div>
+
+<!-- 1 EXIF -->
+<h2 id="exif">1 · File metadata <small>the fastest win</small><span class="tag live">live demo</span></h2>
+<p>Phone cameras write GPS coordinates, a timestamp and the camera model into the JPEG's EXIF block. Most social networks strip it on upload, but files sent as documents, emailed or copied directly often keep it. Choose a JPEG below to see what it reveals.</p>
+<div class="card">
+ <div class="row"><input id="exifFile" type="file" accept="image/jpeg,.jpg,.jpeg"></div>
+ <div id="exifOut" class="out">No file yet. (JPEG only; HEIC photos from iPhones need converting first.)</div>
+ <div id="exifMap" class="map" style="display:none"></div>
+</div>
+
+<!-- 2 SUN -->
+<h2 id="sun">2 · Sun and shadows <small>chronolocation, in reverse</small><span class="tag live">live demo</span></h2>
+<p>At any instant the sun stands straight overhead at one point on Earth, the <i>subsolar point</i>. A shadow's length gives the sun's elevation angle, and every place that sees the sun at that elevation lies on a circle around the subsolar point. If you also know which compass direction the shadow points, only one spot on that circle fits.</p>
+<div class="card">
+ <div class="row"><label>time (UTC)</label><input id="sunTime" type="datetime-local" step="60"></div>
+ <div class="row"><label>object height</label><input id="sunH" type="number" value="1.8" step="0.1" min="0.1"><label>shadow length</label><input id="sunL" type="number" value="1.2" step="0.1" min="0.01"><span class="mute">(same units)</span></div>
+ <div class="row"><label>shadow points toward (° from north, optional)</label><input id="sunAz" type="number" placeholder="e.g. 315" min="0" max="360"><button id="sunGo">Locate</button></div>
+ <div id="sunOut" class="out"></div>
+ <div id="sunMap" class="map"></div>
+ <p class="mute" style="font-size:13px;margin:8px 0 0">Sun position from standard astronomical formulas (accurate to about 0.1°, ignoring refraction). In practice the time comes from metadata, a clock in frame, or a known event; an error of 4 minutes moves the answer by 1° of longitude.</p>
+</div>
+
+<!-- 3 SKYLINE -->
+<h2 id="skyline">3 · Skyline and terrain <small>the shape of the horizon</small><span class="tag live">live demo</span></h2>
+<p>Mountains and ridges form a horizon line that is close to unique for each viewpoint. Researchers render the horizon from a digital elevation model at many candidate points and compare it with the ridge line traced from a photo. Click anywhere on the map to render the 360° horizon a person standing there would see, computed live from open elevation tiles.</p>
+<div class="card">
+ <div id="skyMap" class="map"></div>
+ <canvas id="skyCv" width="1200" height="220"></canvas>
+ <div id="skyOut" class="out">Loading the default viewpoint…</div>
+ <p class="mute" style="font-size:13px;margin:8px 0 0">Terrain: AWS Terrain Tiles (zoom 10, ~120–150 m pixels), radius 28 km, with Earth curvature and standard refraction. Flat land gives a flat line: this channel only works where there is relief.</p>
+</div>
+
+<!-- 4 ENF -->
+<h2 id="enf">4 · Mains hum <small>electrical network frequency</small><span class="tag live">live demo</span></h2>
+<p>Recordings made near mains power often pick up a faint hum at the grid frequency and its harmonics: <b>50 Hz</b> across Europe, Africa, most of Asia and Australia, and <b>60 Hz</b> across North America, much of South America, Taiwan, South Korea and western Japan. The frequency also wanders by a few hundredths of a hertz, in step across a whole grid. Forensic labs match that wander against logged grid data to recover <i>when</i> a recording was made, and on which grid.</p>
+<div class="card">
+ <div class="row"><input id="enfFile" type="file" accept="audio/*,video/*"></div>
+ <canvas id="enfCv" width="1200" height="200"></canvas>
+ <div id="enfOut" class="out">Choose an audio or video file (the first 5 minutes are analysed).</div>
+</div>
+
+<!-- 5 DOPPLER -->
+<h2 id="doppler">5 · Aircraft Doppler <small>planes you can't hear</small></h2>
+<p>Small propeller planes leave faint engine tones that slide down in pitch as they pass. Each slide gives the plane's speed and closest distance, and public flight tracking (ADS-B) says which planes were where. This is the experiment on the <a href="./">main page</a>, rebuilt from scratch.</p>
+<div class="card" id="dopplerCard">
+ <p style="margin:0">We also tested the detector on 10 hours of audio from a public webcam with a known location (2026-11-08, 13:00–23:00 UTC). It found 3 of the 5 propeller planes that ADS-B logged within 8 km. The best match, a Pilatus PC-12 turboprop, was heard 1.5 s from the predicted time, at 141.7 m/s against 141.9 m/s from ADS-B and 4.7 km against 5.0 km. <span class="mute">Search for the location without knowing it: in progress, results will be posted here.</span></p>
+</div>
+
+<!-- 6 VISUAL -->
+<h2 id="visual">6 · Visual matching <small>what a photo shows</small></h2>
+<p>The most common approach for photos: compare what is visible with imagery whose location is already known.</p>
+<div class="grid">
+ <div class="card"><h3>Retrieval against street imagery</h3><p>Build a database of street-level photos with known positions (Google Street View, open Mapillary or KartaView), turn every image into a compact descriptor, and look up the nearest matches for the query photo. Accurate where coverage is dense. The cost is the reference set: commercial imagery is billed per image, so wide searches get expensive quickly.</p></div>
+ <div class="card"><h3>Learned geolocation models</h3><p>Models trained on millions of geotagged photos (PlaNet, GeoCLIP, PIGEON) predict a location straight from pixels, using vegetation, road markings, architecture, light and sky. Usually right about the country, sometimes the city; street-level only with a retrieval step on top.</p></div>
+ <div class="card"><h3>Signs, text and infrastructure</h3><p>Language and script, phone number formats, licence plates, bollards, utility poles, road-line colours, which side of the road traffic drives on. Manual, but very effective; it is how competitive GeoGuessr players work.</p></div>
+ <div class="card"><h3>Sky and weather</h3><p>Star fields and the moon's phase fix a latitude and a date; cloud and rain can be checked against archived weather radar and satellite images for the claimed time and place.</p></div>
+</div>
+
+<footer>Elevation: <a href="https://registry.opendata.aws/terrain-tiles/">AWS Terrain Tiles</a> (Mapzen terrarium). Map: © OpenStreetMap contributors. Code: <a href="https://github.com/kvnloo/doppler-geoloc">github.com/kvnloo/doppler-geoloc</a> (MIT). No analytics; files you choose never leave your browser.</footer>
+</main>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const R2D=180/Math.PI,D2R=Math.PI/180,RE=6371008.8;
+function mkMap(id,c,z){const m=L.map(id,{worldCopyJump:true}).setView(c,z);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,className:'dark-tiles',attribution:'© OpenStreetMap'}).addTo(m);return m}
+function dest(lat,lon,brg,dist){const d=dist/RE,b=brg*D2R,p1=lat*D2R,l1=lon*D2R;const p2=Math.asin(Math.sin(p1)*Math.cos(d)+Math.cos(p1)*Math.sin(d)*Math.cos(b));const l2=l1+Math.atan2(Math.sin(b)*Math.sin(d)*Math.cos(p1),Math.cos(d)-Math.sin(p1)*Math.sin(p2));return[p2*R2D,((l2*R2D+540)%360)-180]}
+
+/* ---------- 1 EXIF ---------- */
+function parseExif(buf){
+ const v=new DataView(buf);if(v.getUint16(0)!==0xFFD8)throw'not a JPEG';
+ let o=2;while(o<v.byteLength-4){const mk=v.getUint16(o),len=v.getUint16(o+2);
+  if(mk===0xFFE1&&v.getUint32(o+4)===0x45786966){return tiff(v,o+10)}
+  if((mk&0xFF00)!==0xFF00)break;o+=2+len}
+ return null}
+function tiff(v,t){
+ const le=v.getUint16(t)===0x4949,u16=p=>v.getUint16(p,le),u32=p=>v.getUint32(p,le);
+ const sz={1:1,2:1,3:2,4:4,5:8,7:1,9:4,10:8};
+ function ifd(off){const out={};const n=u16(t+off);for(let i=0;i<n;i++){const e=t+off+2+i*12,tag=u16(e),ty=u16(e+2),cnt=u32(e+4);
+  const bytes=(sz[ty]||1)*cnt,p=bytes<=4?e+8:t+u32(e+8);let val;
+  if(ty===2){val='';for(let k=0;k<cnt-1;k++)val+=String.fromCharCode(v.getUint8(p+k))}
+  else if(ty===5||ty===10){val=[];for(let k=0;k<cnt;k++){const a=ty===5?u32(p+8*k):v.getInt32(p+8*k,le),b=ty===5?u32(p+8*k+4):v.getInt32(p+8*k+4,le);val.push(b?a/b:0)}}
+  else if(ty===3)val=u16(p);else if(ty===4)val=u32(p);else if(ty===1||ty===7)val=v.getUint8(p);
+  out[tag]=val}return out}
+ const i0=ifd(u32(t+4)),r={make:i0[0x010F],model:i0[0x0110],software:i0[0x0131]};
+ if(i0[0x8769]){const ex=ifd(i0[0x8769]);r.taken=ex[0x9003];r.offset=ex[0x9011]}
+ if(i0[0x8825]){const g=ifd(i0[0x8825]);const dms=a=>a&&a[0]+a[1]/60+a[2]/3600;
+  if(g[2]&&g[4]){r.lat=dms(g[2])*(g[1]==='S'?-1:1);r.lon=dms(g[4])*(g[3]==='W'?-1:1)}
+  if(g[6])r.alt=(Array.isArray(g[6])?g[6][0]:g[6])*(g[5]===1?-1:1)}
+ return r}
+let exifMap;
+document.getElementById('exifFile').onchange=async e=>{
+ const f=e.target.files[0],out=document.getElementById('exifOut');if(!f)return;
+ try{const r=parseExif(await f.arrayBuffer());
+  if(!r){out.textContent=`${f.name}: no EXIF block. It was stripped (typical after social-media upload or a screenshot), so this channel is empty: move on to the others.`;return}
+  const lines=[`file      ${f.name}`,`camera    ${[r.make,r.model].filter(Boolean).join(' ')||'—'}`,`software  ${r.software||'—'}`,`taken     ${r.taken||'—'}${r.offset?' (UTC'+r.offset+')':''}`];
+  if(r.lat!=null){lines.push(`GPS       ${r.lat.toFixed(6)}, ${r.lon.toFixed(6)}${r.alt!=null?'  alt '+r.alt.toFixed(0)+' m':''}`,'','→ This file gives away its exact location. Strip metadata before sharing originals.');
+   const el=document.getElementById('exifMap');el.style.display='block';
+   if(!exifMap)exifMap=mkMap('exifMap',[r.lat,r.lon],15);else exifMap.setView([r.lat,r.lon],15);
+   exifMap.invalidateSize();L.circleMarker([r.lat,r.lon],{radius:8,color:'#ffd166'}).addTo(exifMap)}
+  else lines.push('GPS       — (none: location services were off, or GPS was removed)');
+  out.textContent=lines.join('\n')}catch(err){out.textContent='Could not read: '+err}};
+
+/* ---------- 2 SUN ---------- */
+function subsolar(date){ // NOAA / Meeus low-precision
+ const jd=date.getTime()/864e5+2440587.5,n=jd-2451545.0;
+ const Lm=(280.460+0.9856474*n)%360,g=(357.528+0.9856003*n)*D2R;
+ const lam=(Lm+1.915*Math.sin(g)+0.020*Math.sin(2*g))*D2R,eps=(23.439-4e-7*n)*D2R;
+ const dec=Math.asin(Math.sin(eps)*Math.sin(lam));
+ const ra=Math.atan2(Math.cos(eps)*Math.sin(lam),Math.cos(lam));
+ const gmst=(280.46061837+360.98564736629*n)%360; // degrees
+ let lon=(ra*R2D-gmst)%360;lon=((lon+540)%360)-180;return[dec*R2D,lon]}
+function sunAt(lat,lon,ss){const[d,l]=ss.map(x=>x*D2R),p=lat*D2R,q=lon*D2R;
+ const S=[Math.cos(d)*Math.cos(l),Math.cos(d)*Math.sin(l),Math.sin(d)];
+ const E=[-Math.sin(q),Math.cos(q),0],N=[-Math.sin(p)*Math.cos(q),-Math.sin(p)*Math.sin(q),Math.cos(p)],U=[Math.cos(p)*Math.cos(q),Math.cos(p)*Math.sin(q),Math.sin(p)];
+ const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];return{el:Math.asin(dot(S,U))*R2D,az:(Math.atan2(dot(S,E),dot(S,N))*R2D+360)%360}}
+const sunMap=mkMap('sunMap',[20,0],1);let sunLayer=L.layerGroup().addTo(sunMap);
+(()=>{const d=new Date();d.setUTCMinutes(0,0,0);document.getElementById('sunTime').value=d.toISOString().slice(0,16)})();
+function sunGo(){
+ const t=new Date(document.getElementById('sunTime').value+'Z'),H=+document.getElementById('sunH').value,Ls=+document.getElementById('sunL').value,azIn=document.getElementById('sunAz').value;
+ const el=Math.atan2(H,Ls)*R2D,ss=subsolar(t),rho=(90-el)*D2R*RE;sunLayer.clearLayers();
+ const pts=[];for(let b=0;b<=360;b+=1)pts.push(dest(ss[0],ss[1],b,rho));
+ // split at the antimeridian so the circle does not streak across the map
+ let seg=[pts[0]];for(let i=1;i<pts.length;i++){if(Math.abs(pts[i][1]-pts[i-1][1])>180){L.polyline(seg,{color:'#ffd166',weight:2}).addTo(sunLayer);seg=[]}seg.push(pts[i])}
+ L.polyline(seg,{color:'#ffd166',weight:2}).addTo(sunLayer);
+ L.circleMarker(ss,{radius:6,color:'#ff6b6b'}).bindTooltip('sun overhead').addTo(sunLayer);
+ const lines=[`sun elevation from shadow  ${el.toFixed(1)}°`,`sun overhead at            ${ss[0].toFixed(2)}, ${ss[1].toFixed(2)}`,`possible locations         yellow circle, radius ${(rho/1000).toFixed(0)} km`];
+ if(azIn!==''){const sunAz=(+azIn+180)%360;let best=null;
+  for(let b=0;b<360;b+=0.25){const p=dest(ss[0],ss[1],b,rho),s=sunAt(p[0],p[1],ss),e=Math.abs(((s.az-sunAz+540)%360)-180);if(!best||e<best.e)best={p,e}}
+  L.circleMarker(best.p,{radius:9,color:'#5ee6ff',weight:3}).bindTooltip('fits the shadow direction').addTo(sunLayer);
+  lines.push(`sun azimuth (opposite the shadow)  ${sunAz.toFixed(0)}°`,`→ single fit                ${best.p[0].toFixed(2)}, ${best.p[1].toFixed(2)}  (±1° of azimuth ≈ ±${(rho*D2R/1000).toFixed(0)} km along the circle)`)}
+ if(el<=0)lines.push('the sun is below the horizon for this shadow: check the inputs');
+ document.getElementById('sunOut').textContent=lines.join('\n')}
+document.getElementById('sunGo').onclick=sunGo;sunGo();
+
+/* ---------- 3 SKYLINE ---------- */
+const skyMap=mkMap('skyMap',[37.7459,-119.5936],10);let skyMk=null;
+const TZ=10;
+function tileImg(x,y){return new Promise((res,rej)=>{const im=new Image();im.crossOrigin='anonymous';im.onload=()=>res(im);im.onerror=rej;im.src=`https://elevation-tiles-prod.s3.amazonaws.com/terrarium/${TZ}/${x}/${y}.png`})}
+async function horizon(lat,lon){
+ const out=document.getElementById('skyOut');out.textContent='Fetching elevation tiles…';
+ const n=2**TZ,fx=(lon+180)/360*n,fy=(1-Math.asinh(Math.tan(lat*D2R))/Math.PI)/2*n,tx=Math.floor(fx),ty=Math.floor(fy);
+ const cv=document.createElement('canvas');cv.width=cv.height=768;const cx=cv.getContext('2d',{willReadFrequently:true});
+ const jobs=[];for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++)jobs.push(tileImg(tx+dx,ty+dy).then(im=>cx.drawImage(im,(dx+1)*256,(dy+1)*256)));
+ await Promise.all(jobs);const px=cx.getImageData(0,0,768,768).data;
+ const elev=(la,lo)=>{const X=Math.round(((lo+180)/360*n-(tx-1))*256),Y=Math.round(((1-Math.asinh(Math.tan(la*D2R))/Math.PI)/2*n-(ty-1))*256);
+  if(X<0||Y<0||X>767||Y>767)return NaN;const i=(Y*768+X)*4;return px[i]*256+px[i+1]+px[i+2]/256-32768};
+ const h0=Math.max(elev(lat,lon),0)+1.7,K=0.13,prof=new Float32Array(360),far=new Float32Array(360);
+ for(let a=0;a<360;a++){let best=-90,bd=0;const br=a*D2R,c=Math.cos(lat*D2R);
+  for(let r=150;r<=28000;r+=110){const la=lat+r*Math.cos(br)/111320,lo=lon+r*Math.sin(br)/(111320*c),e=elev(la,lo);if(isNaN(e))break;
+   const ang=Math.atan2(Math.max(e,0)-h0-r*r/(2*RE)*(1-K),r)*R2D;if(ang>best){best=ang;bd=r}}
+  prof[a]=best;far[a]=bd}
+ draw(prof);let mx=0;for(let a=1;a<360;a++)if(prof[a]>prof[mx])mx=a;
+ const mean=prof.reduce((s,x)=>s+x,0)/360,sd=Math.sqrt(prof.reduce((s,x)=>s+(x-mean)**2,0)/360);
+ out.textContent=`viewpoint  ${lat.toFixed(4)}, ${lon.toFixed(4)}   ground ${(h0-1.7).toFixed(0)} m\nhighest horizon  ${prof[mx].toFixed(1)}° toward ${mx}° (ridge ${(far[mx]/1000).toFixed(1)} km away)\nhorizon relief   ${sd.toFixed(2)}° std. dev. ${sd<0.4?'→ nearly flat: skyline matching will not work here':'→ distinctive enough to match against a photo'}`}
+function draw(p){const c=document.getElementById('skyCv'),g=c.getContext('2d'),W=c.width,H=c.height;g.clearRect(0,0,W,H);
+ const lo=Math.min(-1,Math.min(...p)),hi=Math.max(2,Math.max(...p))+1,y=v=>H-24-(v-lo)/(hi-lo)*(H-36);
+ const sky=g.createLinearGradient(0,0,0,H);sky.addColorStop(0,'#0e2236');sky.addColorStop(1,'#1d3a52');g.fillStyle=sky;g.fillRect(0,0,W,H-20);
+ g.beginPath();g.moveTo(0,H-20);for(let a=0;a<=360;a++)g.lineTo(a/360*W,y(p[a%360]));g.lineTo(W,H-20);g.closePath();g.fillStyle='#07080a';g.fill();
+ g.strokeStyle='#ffd166';g.lineWidth=2;g.beginPath();for(let a=0;a<=360;a++)g[a?'lineTo':'moveTo'](a/360*W,y(p[a%360]));g.stroke();
+ g.fillStyle='#9a978d';g.font=(innerWidth<600?40:22)+'px system-ui';['N','E','S','W','N'].forEach((s,i)=>g.fillText(s,Math.min(W-18,i*W/4+(i?-6:4)),H-2))}
+skyMap.on('click',e=>{if(skyMk)skyMk.remove();skyMk=L.circleMarker(e.latlng,{radius:7,color:'#ffd166'}).addTo(skyMap);horizon(e.latlng.lat,e.latlng.lng).catch(err=>document.getElementById('skyOut').textContent='Elevation fetch failed: '+err)});
+skyMk=L.circleMarker([37.7459,-119.5936],{radius:7,color:'#ffd166'}).addTo(skyMap);horizon(37.7459,-119.5936).catch(err=>document.getElementById('skyOut').textContent='Elevation fetch failed: '+err);
+
+/* ---------- 4 ENF ---------- */
+function fft(re,im){const n=re.length;for(let i=1,j=0;i<n;i++){let b=n>>1;for(;j&b;b>>=1)j^=b;j^=b;if(i<j){[re[i],re[j]]=[re[j],re[i]];[im[i],im[j]]=[im[j],im[i]]}}
+ for(let len=2;len<=n;len<<=1){const a=-2*Math.PI/len,wr=Math.cos(a),wi=Math.sin(a);for(let i=0;i<n;i+=len){let cr=1,ci=0;for(let k=0;k<len/2;k++){const ur=re[i+k],ui=im[i+k],vr=re[i+k+len/2]*cr-im[i+k+len/2]*ci,vi=re[i+k+len/2]*ci+im[i+k+len/2]*cr;re[i+k]=ur+vr;im[i+k]=ui+vi;re[i+k+len/2]=ur-vr;im[i+k+len/2]=ui-vi;const t=cr*wr-ci*wi;ci=cr*wi+ci*wr;cr=t}}}}
+document.getElementById('enfFile').onchange=async e=>{
+ const f=e.target.files[0],out=document.getElementById('enfOut');if(!f)return;out.textContent='Decoding…';
+ try{const ac=new (window.AudioContext||window.webkitAudioContext)();const ab=await ac.decodeAudioData(await f.arrayBuffer());ac.close();
+  const sr=ab.sampleRate,dec=Math.max(1,Math.floor(sr/2000)),fs=sr/dec,ch=ab.getChannelData(0),N=Math.min(ch.length,Math.floor(300*sr));
+  const y=new Float32Array(Math.floor(N/dec));for(let i=0;i<y.length;i++){let s=0;for(let k=0;k<dec;k++)s+=ch[i*dec+k];y[i]=s/dec}
+  const M=8192,P=new Float64Array(M/2);let segs=0;const re=new Float64Array(M),im=new Float64Array(M);
+  for(let o=0;o+M<=y.length;o+=M/2){for(let i=0;i<M;i++){re[i]=y[o+i]*(0.5-0.5*Math.cos(2*Math.PI*i/M));im[i]=0}fft(re,im);for(let k=0;k<M/2;k++)P[k]+=re[k]*re[k]+im[k]*im[k];segs++}
+  if(!segs)throw'clip too short (needs a few seconds)';
+  const df=fs/M,dB=Array.from(P,x=>10*Math.log10(x/segs+1e-30));
+  const prom=f0=>{const k0=Math.round(f0/df),w=Math.max(1,Math.round(0.7/df)),bw=Math.round(6/df);let pk=-1e9;for(let k=k0-w;k<=k0+w;k++)pk=Math.max(pk,dB[k]);
+   const bg=[];for(let k=k0-bw;k<=k0+bw;k++)if(Math.abs(k-k0)>2*w)bg.push(dB[k]);bg.sort((a,b)=>a-b);return pk-bg[bg.length>>1]};
+  const s50=[50,100,150].map(prom),s60=[60,120,180].map(prom),a50=Math.max(...s50),a60=Math.max(...s60);
+  const c=document.getElementById('enfCv'),g=c.getContext('2d'),W=c.width,H=c.height,k1=Math.round(30/df),k2=Math.round(200/df),seg=dB.slice(k1,k2),lo=Math.min(...seg),hi=Math.max(...seg);
+  g.clearRect(0,0,W,H);g.strokeStyle='#333';[50,60,100,120,150,180].forEach(fq=>{const x=(fq-30)/170*W;g.beginPath();g.moveTo(x,0);g.lineTo(x,H);g.stroke();g.fillStyle=fq%50?'#5ee6ff':'#ffd166';g.font=(innerWidth<600?36:20)+'px system-ui';g.fillText(fq,x+3,innerWidth<600?36:20)});
+  g.strokeStyle='#e8e6df';g.lineWidth=1.5;g.beginPath();seg.forEach((v,i)=>{const x=i/seg.length*W,yy=H-8-(v-lo)/(hi-lo+1e-9)*(H-30);i?g.lineTo(x,yy):g.moveTo(x,yy)});g.stroke();
+  const verdict=Math.max(a50,a60)<6?'no clear mains hum (battery-powered device, or far from wiring)':a50>a60+3?'50 Hz grid → Europe, Africa, most of Asia, Australia, parts of South America':a60>a50+3?'60 Hz grid → North America, Central America, much of South America, Taiwan, South Korea, western Japan, Saudi Arabia':'ambiguous: both families show peaks';
+  out.textContent=`analysed   ${(y.length/fs).toFixed(0)} s at ${fs.toFixed(0)} Hz, resolution ${df.toFixed(2)} Hz\n50 Hz family peak height  ${s50.map(x=>x.toFixed(1)).join(' / ')} dB (50/100/150)\n60 Hz family peak height  ${s60.map(x=>x.toFixed(1)).join(' / ')} dB (60/120/180)\n→ ${verdict}`}
+ catch(err){out.textContent='Could not analyse: '+err}};
+</script>
+</body>
+</html>
