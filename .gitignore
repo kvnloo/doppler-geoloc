@@ -6,3 +6,4 @@ adsb/
 dem_tiles/
 __pycache__/
 .venv/
+.taste-skill/

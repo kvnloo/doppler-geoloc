@@ -1,0 +1,206 @@
+{
+ "window": "2026-11-08 13:00-23:00 UTC",
+ "range_km": 12,
+ "flyovers": [
+  {
+   "t": 3202,
+   "brg": 233,
+   "km": 3.44,
+   "alt_m": 1265,
+   "v": 79.3,
+   "type": "BE58",
+   "prop": true,
+   "heard": {
+    "dt": 17.0,
+    "v": 58.0,
+    "km": 2.01
+   }
+  },
+  {
+   "t": 5611,
+   "brg": 301,
+   "km": 3.23,
+   "alt_m": 3048,
+   "v": 154.8,
+   "type": "B38M",
+   "prop": false,
+   "heard": null
+  },
+  {
+   "t": 9419,
+   "brg": 105,
+   "km": 7.85,
+   "alt_m": 3398,
+   "v": 182.9,
+   "type": "E75L",
+   "prop": false,
+   "heard": null
+  },
+  {
+   "t": 13801,
+   "brg": 293,
+   "km": 5.01,
+   "alt_m": 4819,
+   "v": 141.9,
+   "type": "PC12",
+   "prop": true,
+   "heard": {
+    "dt": -1.5,
+    "v": 141.7,
+    "km": 4.67
+   }
+  },
+  {
+   "t": 14001,
+   "brg": 241,
+   "km": 7.4,
+   "alt_m": 4224,
+   "v": 211.0,
+   "type": "E145",
+   "prop": false,
+   "heard": null
+  },
+  {
+   "t": 14439,
+   "brg": 322,
+   "km": 2.79,
+   "alt_m": 2658,
+   "v": 73.2,
+   "type": "P210",
+   "prop": true,
+   "heard": {
+    "dt": 3.3,
+    "v": 68.3,
+    "km": 2.46
+   }
+  },
+  {
+   "t": 16340,
+   "brg": 106,
+   "km": 5.81,
+   "alt_m": 3060,
+   "v": 164.3,
+   "type": "E45X",
+   "prop": false,
+   "heard": null
+  },
+  {
+   "t": 17288,
+   "brg": 14,
+   "km": 7.29,
+   "alt_m": 1759,
+   "v": 117.0,
+   "type": "SF50",
+   "prop": false,
+   "heard": null
+  },
+  {
+   "t": 19439,
+   "brg": 106,
+   "km": 5.8,
+   "alt_m": 2190,
+   "v": 65.3,
+   "type": "AA5",
+   "prop": true,
+   "heard": null
+  },
+  {
+   "t": 20472,
+   "brg": 295,
+   "km": 4.26,
+   "alt_m": 3421,
+   "v": 189.0,
+   "type": "E75L",
+   "prop": false,
+   "heard": null
+  },
+  {
+   "t": 24450,
+   "brg": 209,
+   "km": 8.12,
+   "alt_m": 971,
+   "v": 42.9,
+   "type": "C172",
+   "prop": true,
+   "heard": null
+  },
+  {
+   "t": 26558,
+   "brg": 75,
+   "km": 7.6,
+   "alt_m": 4209,
+   "v": 193.4,
+   "type": "E145",
+   "prop": false,
+   "heard": null
+  },
+  {
+   "t": 26842,
+   "brg": 208,
+   "km": 8.75,
+   "alt_m": 1222,
+   "v": 70.3,
+   "type": "C172",
+   "prop": true,
+   "heard": null
+  },
+  {
+   "t": 31071,
+   "brg": 296,
+   "km": 5.36,
+   "alt_m": 3012,
+   "v": 173.6,
+   "type": "E75L",
+   "prop": false,
+   "heard": null
+  },
+  {
+   "t": 35598,
+   "brg": 14,
+   "km": 3.96,
+   "alt_m": 526,
+   "v": 52.0,
+   "type": "P28A",
+   "prop": true,
+   "heard": null
+  }
+ ],
+ "unmatched_detections": [
+  {
+   "t": 1131,
+   "v": 51.5,
+   "km": 0.6
+  },
+  {
+   "t": 13712,
+   "v": 120.6,
+   "km": 6.94
+  },
+  {
+   "t": 24262,
+   "v": 105.0,
+   "km": 11.14
+  },
+  {
+   "t": 27831,
+   "v": 37.3,
+   "km": 0.99
+  },
+  {
+   "t": 30692,
+   "v": 124.4,
+   "km": 1.99
+  },
+  {
+   "t": 32456,
+   "v": 50.4,
+   "km": 0.66
+  },
+  {
+   "t": 34139,
+   "v": 77.1,
+   "km": 2.12
+  }
+ ],
+ "note": "bearing/range from the camera; ADS-B adsb.lol; camera position used only for grading"
+}

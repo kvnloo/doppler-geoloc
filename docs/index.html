@@ -5,296 +5,249 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Where was this recorded? Six clues, tested on one real recording</title>
 <meta name="description" content="An open rebuild of colsto's inaudible-aircraft geolocation experiment, set inside a tour of every way media leaks its location: metadata, mains hum, sun and shadows, skyline, visual matching and aircraft Doppler. Every demo runs in your browser.">
-<script>document.documentElement.dataset.theme=localStorage.getItem('dg.theme')||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark')</script>
-<link rel="preload" href="assets/fonts/InstrumentSans-Regular.woff2" as="font" type="font/woff2" crossorigin>
+<script>document.documentElement.classList.add('js')</script>
+<link rel="preload" href="assets/fonts/BricolageGrotesque-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="assets/hud.css">
-<style>
-/* page shell: sticky case-file rail + one continuous investigation */
-.shell{display:grid;grid-template-columns:minmax(0,1fr);gap:0}
-.rail{display:none}
-@media(min-width:1100px){
-  .shell{grid-template-columns:210px minmax(0,1fr);gap:56px}
-  .rail{display:block;position:sticky;top:80px;align-self:start;padding-top:8px}
-}
-.rail .k{display:block;margin-bottom:14px}
-.rail ol{list-style:none;margin:0;padding:0 0 0 14px;border-left:1px dotted var(--bracket)}
-.rail li{position:relative;margin:0 0 14px}
-.rail li::before{content:"";position:absolute;left:-19px;top:6px;width:9px;height:9px;border-radius:50%;border:1.5px solid var(--mute);background:var(--bg)}
-.rail li.hit::before{border-color:var(--acc);background:var(--acc)}
-.rail a{text-decoration:none;color:var(--mute);font-size:14.5px;line-height:1.3;display:block}
-.rail a small{display:block;font:12px/1.4 "IBM Plex Mono",monospace;color:var(--mute);opacity:.85}
-.rail a:hover,.rail a.on{color:var(--ink)}
-.rail a.on small{color:var(--ink2)}
-.rail .sep{margin:22px 0 14px}
-
-/* clue ladder: log precision axis, plus what this recording gave */
-.prec .row{display:grid;grid-template-columns:200px minmax(0,1fr) 170px;gap:20px;align-items:center;padding:9px 0;text-decoration:none;color:inherit}
-.prec .row:hover .nm{color:var(--acc)}
-.prec .nm{font-weight:600;font-size:15px;line-height:1.25}
-.prec .nm small{display:block;font:12px/1.4 "IBM Plex Mono",monospace;color:var(--mute);font-weight:400;margin-top:2px}
-.prec .res{font:12px/1.35 "IBM Plex Mono",monospace;color:var(--mute)}
-.prec .row.hit .res{color:var(--acc)}
-.prec .trk{position:relative;height:22px}
-.prec .trk::before{content:"";position:absolute;left:0;right:0;top:50%;border-top:1px solid var(--grid)}
-.prec .rng{position:absolute;top:50%;height:0;border-top:3px dotted var(--ink);transform:translateY(-1.5px)}
-.prec .rng::before,.prec .rng::after{content:"";position:absolute;top:-6px;width:9px;height:9px;border-radius:50%;border:1.5px solid var(--ink);background:var(--bg)}
-.prec .rng::before{left:-5px}.prec .rng::after{right:-5px}
-.prec .hit .rng{border-top-color:var(--acc)}
-.prec .hit .rng::before,.prec .hit .rng::after{background:var(--acc);border-color:var(--acc)}
-.prec .axis{display:grid;grid-template-columns:200px minmax(0,1fr) 170px;gap:20px;margin-top:6px}
-.prec .ticks{position:relative;height:30px;border-top:1px solid var(--line)}
-.prec .ticks span{position:absolute;top:8px;transform:translateX(-50%);font:11px "IBM Plex Mono",monospace;color:var(--mute);white-space:nowrap}
-.prec .ticks span::before{content:"";position:absolute;left:50%;top:-9px;height:5px;border-left:1px solid var(--line)}
-.prec .colh{display:grid;grid-template-columns:200px minmax(0,1fr) 170px;gap:20px;margin-bottom:4px}
-@media(max-width:760px){.prec .row,.prec .axis,.prec .colh{grid-template-columns:minmax(0,1fr);gap:6px}.prec .axis>div:not(.ticks),.prec .colh{display:none}
-  .prec .ticks span:nth-child(even){display:none}.prec .row{padding:12px 0}}
-
-/* chapter verdict line ties each clue back to the recording */
-.verdict{display:grid;grid-template-columns:150px minmax(0,1fr);gap:16px;align-items:baseline;border-top:1px dotted var(--bracket);margin-top:22px;padding-top:14px;max-width:880px}
-.verdict .k{color:var(--mute)}
-.verdict p{margin:0;color:var(--ink2)}
-.verdict.hit .k{color:var(--acc)}
-@media(max-width:600px){.verdict{grid-template-columns:minmax(0,1fr);gap:4px}}
-
-.chapter{padding:96px 0 0}
-.chapter>h2{max-width:24ch}
-.sub{padding-top:44px}
-.sub h3{font-size:21px;letter-spacing:-.01em;margin-bottom:8px}
-.bento{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:20px;margin-top:20px}
-.bento.b2{grid-template-columns:minmax(0,5fr) minmax(0,7fr);margin-top:20px}
-.bento .panel{margin:0}
-.bento p{margin:0;color:var(--ink2);font-size:15.5px}
-@media(max-width:860px){.bento,.bento.b2{grid-template-columns:minmax(0,1fr)}}
-.figs img{display:block;width:100%;height:auto}
-.figs figure{margin:0}
-.figs figcaption{font:12px "IBM Plex Mono",monospace;color:var(--mute);padding:8px 0 0}
-.funnel .f{display:grid;grid-template-columns:minmax(0,1fr) 130px;gap:14px;align-items:center;padding:7px 0;font-size:14.5px;color:var(--ink2)}
-.funnel .b{height:3px;background:var(--acc);margin-top:7px}
-.funnel .n{text-align:right;font:13px "IBM Plex Mono",monospace;color:var(--ink);font-variant-numeric:tabular-nums}
-.sliders{display:grid;grid-template-columns:120px minmax(0,1fr) 80px;gap:10px 16px;align-items:center;margin-bottom:14px;font:12px "IBM Plex Mono",monospace;color:var(--mute);text-transform:uppercase;letter-spacing:.08em}
-.sliders output{color:var(--ink);text-align:right;text-transform:none;letter-spacing:0}
-#map{height:420px}
-</style>
+<link rel="stylesheet" href="assets/base.css">
+<link rel="stylesheet" href="assets/site.css">
 </head>
 <body>
-<header class="bar"><div class="in">
-  <a class="mark" href="#top"><i></i><span>where was this recorded?</span></a>
-  <nav><a href="#clues">Clues</a><a href="#doppler">Aircraft</a><a href="#status">Status</a><a href="https://github.com/kvnloo/doppler-geoloc">Code</a></nav>
-  <button class="theme" type="button" aria-label="toggle colour theme">light</button>
-</div></header>
+<header class="bar">
+  <a class="mark" href="#top"><span class="dot" aria-hidden="true"></span>doppler-geoloc</a>
+  <nav><a href="#clues">Clues</a><a href="#doppler">Aircraft</a><a class="wide" href="#live">Live test</a><a href="https://github.com/kvnloo/doppler-geoloc">Code</a></nav>
+</header>
 
-<main class="wrap" id="top">
-<div class="shell">
-<aside class="rail" aria-label="case file">
-  <span class="k">case file</span>
-  <ol id="railList">
-    <li><a href="#metadata">File metadata<small>stripped by upload</small></a></li>
-    <li><a href="#hum">Mains hum<small>none found</small></a></li>
-    <li><a href="#sun">Sun and shadows<small>not used, audio only</small></a></li>
-    <li><a href="#skyline">Skyline<small>not used, audio only</small></a></li>
-    <li><a href="#visual">Visual matching<small>not used, audio only</small></a></li>
-    <li class="hit"><a href="#doppler">Aircraft Doppler<small>two curves found</small></a></li>
-  </ol>
-  <ol class="sep"><li><a href="#status">Status<small>partial reproduction</small></a></li></ol>
-</aside>
-
-<div>
-<div class="hero">
-  <h1>Where was this recorded?</h1>
-  <p class="lede">One real hour of forest audio, six ways media can give away its location. Most find nothing here. Two planes nobody can hear still leave a trace.</p>
-  <div class="readouts" id="stats"></div>
-</div>
-
-<div class="prose" style="margin-top:44px">
-<p>YouTuber <a href="https://www.youtube.com/watch?v=UytYrhYLOKI">colsto</a> showed that faint propeller-plane tones in the background of a recording form Doppler curves, and that matching them against public flight tracking (ADS-B) can place the recording to about 100 m (<a href="https://www.ibtimes.co.uk/inaudible-aircraft-sounds-reveal-recording-location-1829800">IBTimes</a>). He released no code. This page rebuilds his pipeline on his published raw recording, and first tries every other common clue on the same file, so you can see why the aircraft matter.</p>
-</div>
-
-<div class="note" style="margin-top:28px"><b>Use these techniques on your own media, or for verification and journalism.</b> Using them to find a private person's home is stalking. Nothing you load into the demos below is uploaded; it all runs in your browser.</div>
-
-<!-- LADDER -->
-<section id="clues" class="chapter">
-  <h2>How much each clue can narrow the map</h2>
-  <p class="prose" style="color:var(--ink2);margin:0 0 18px">Investigators stack clues: one rules out a continent, another picks a valley, a third picks the street. Ranges are rough orders of magnitude. The right column is what each one gave on our recording.</p>
-  <div class="panel prec" id="prec"></div>
-</section>
-
-<!-- 1 METADATA -->
-<section id="metadata" class="chapter reveal">
-  <h2>File metadata <span class="tag">try it</span></h2>
-  <div class="prose"><p>Always the first check. Phone cameras write GPS coordinates, a timestamp and the camera model into a photo's EXIF block. Most platforms strip it on upload, but files sent as documents, emailed or copied directly often keep it.</p></div>
-  <div class="panel split">
-    <div>
-      <div class="ctl"><label>photo (JPEG)<input id="exifFile" type="file" accept="image/jpeg,.jpg,.jpeg"></label></div>
-      <div id="exifOut" class="out empty">No file yet. HEIC photos from iPhones need converting to JPEG first.</div>
-    </div>
-    <div id="exifMap" class="map" style="height:300px"></div>
+<main id="top">
+<section class="hero f-dark">
+  <div class="waves" aria-hidden="true"><i class="w1"></i><i class="w2"></i><div class="w3 shutter" data-reveal><img src="assets/hero_e1.jpg" alt="" width="1200" height="1200"></div></div>
+  <div class="copy">
+    <h1>Where was this recorded?</h1>
+    <p class="lede">One hour of forest audio, six ways a recording gives away its place, and two small planes nobody heard.</p>
+    <a class="button" href="#clues">Follow the clues</a>
   </div>
-  <div class="verdict"><span class="k">this recording</span><p>A YouTube upload. The platform re-encodes video and audio and does not pass camera metadata through, so there is nothing to read.</p></div>
+  <p class="cap">Pictured: the first plane, an engine tone sliding from about 190 to 80 Hz as it passes, 36 minutes into the hour.</p>
 </section>
 
-<!-- 2 HUM -->
-<section id="hum" class="chapter reveal">
-  <h2>Mains hum <span class="tag">try it</span></h2>
-  <div class="prose"><p>Recordings made near mains power often pick up a faint hum at the grid frequency: <b>50 Hz</b> across Europe, Africa, most of Asia and Australia, <b>60 Hz</b> across North America, much of South America, Taiwan, South Korea and western Japan. The frequency also wanders by a few hundredths of a hertz, in step across a whole grid, so forensic labs match that wander against grid logs to recover <i>when</i> a recording was made.</p></div>
-  <div class="panel split rev">
-    <canvas id="enfCv" width="1200" height="420"></canvas>
-    <div>
-      <div class="ctl"><label>audio or video file<input id="enfFile" type="file" accept="audio/*,video/*"></label></div>
-      <div id="enfOut" class="out empty">The first 5 minutes are analysed. The plot shows 30 to 200 Hz; dotted lines mark the 50 Hz and 60 Hz families.</div>
+<section class="sec intro f-white wrap">
+  <div class="grid">
+    <p class="statement c-1-7">We tried six location clues on one real hour of forest audio<span class="fr"><img src="assets/overview.png" alt="" style="object-position:24% 50%"></span>, and only two faint propeller planes<span class="fr"><img src="assets/pc12.jpg" alt=""></span> left a trace we could follow.</p>
+    <div class="c-8-12 stack">
+      <p>YouTuber <a href="https://www.youtube.com/watch?v=UytYrhYLOKI">colsto</a> showed that faint propeller tones in the background of a recording form Doppler curves, and that matching them against public flight tracking (ADS-B) can place the recording to about 100 m (<a href="https://www.ibtimes.co.uk/inaudible-aircraft-sounds-reveal-recording-location-1829800">IBTimes</a>). He released no code. This page rebuilds his pipeline on his published raw recording, after first trying every other common clue on the same file.</p>
+      <p class="note"><b>Use these techniques on your own media, or for verification and journalism.</b> Using them to find a private person's home is stalking. Nothing you load into the demos is uploaded; it all runs in your browser.</p>
     </div>
   </div>
-  <div class="verdict"><span class="k">this recording</span><p>No hum peaks in either family in the 5-minute stretch we tested. Expected outdoors, away from wiring.</p></div>
 </section>
 
-<!-- 3 SUN -->
-<section id="sun" class="chapter reveal">
-  <h2>Sun and shadows <span class="tag">try it</span></h2>
-  <div class="prose"><p>At any instant the sun stands straight overhead at one point on Earth. A shadow's length gives the sun's height above the horizon, and every place that sees the sun at that height lies on a circle around that point. If you also know which compass direction the shadow points, only one spot on the circle fits.</p></div>
-  <div class="panel">
-    <div class="ctl">
-      <label>time (UTC)<input id="sunTime" type="datetime-local" step="60"></label>
-      <label>object height<input id="sunH" type="number" value="1.8" step="0.1" min="0.1"></label>
-      <label>shadow length<input id="sunL" type="number" value="1.2" step="0.1" min="0.01"></label>
-      <label>shadow bearing (optional)<input id="sunAz" type="number" placeholder="e.g. 315" min="0" max="360"></label>
-      <button id="sunGo" class="btn" type="button">Locate</button>
+<section id="clues" class="sec f-white wrap">
+  <div class="head-row"><h2>How far each clue narrows the map</h2><p>Investigators stack clues: one rules out a continent, another picks a valley, a third picks the street. The ranges are rough orders of magnitude; the right column is what each clue gave on our recording.</p></div>
+  <div class="prec" id="prec"></div>
+</section>
+
+<section id="metadata" class="sec chapter f-white wrap">
+  <div class="grid">
+    <div class="c-1-5 stack"><h2>File metadata</h2>
+      <p>Always the first check. Phone cameras write GPS coordinates, a timestamp and the camera model into a photo's EXIF block. Most platforms strip it on upload, but files sent as documents, emailed or copied directly often keep it.</p>
+      <div class="ctl"><label>Choose a photo (JPEG)<input id="exifFile" type="file" accept="image/jpeg,.jpg,.jpeg"></label></div>
+      <pre id="exifOut" class="out empty">No file yet. HEIC photos from iPhones need converting to JPEG first.</pre>
     </div>
-    <div id="sunMap" class="map" style="height:380px"></div>
-    <div id="sunOut" class="out"></div>
-    <p class="hint">Height and length in the same units; bearing in degrees from north. Sun position from standard astronomical formulas (about 0.1°, ignoring refraction). A clock error of 4 minutes moves the answer by 1° of longitude.</p>
+    <div class="c-6-12"><div id="exifMap" class="map" style="height:440px"></div></div>
   </div>
-  <div class="verdict"><span class="k">this recording</span><p>Not used. We analysed the audio track only; the frames would need a measurable shadow and a trusted clock.</p></div>
+  <div class="verdict"><span class="dot"></span><b>This recording</b><p>A YouTube upload. The platform re-encodes video and audio and passes no camera metadata through, so there is nothing to read.</p></div>
 </section>
 
-<!-- 4 SKYLINE -->
-<section id="skyline" class="chapter reveal">
-  <h2>Skyline and terrain <span class="tag">try it</span></h2>
-  <div class="prose"><p>Ridges form a horizon line that is close to unique for each viewpoint. Researchers render the horizon from an elevation model at many candidate points and compare it with the ridge traced from a photo. Click anywhere on the map to draw the 360° horizon a person standing there would see.</p></div>
-  <div class="panel">
-    <div id="skyMap" class="map" style="height:340px"></div>
-    <canvas id="skyCv" width="1200" height="220" style="margin-top:2px"></canvas>
-    <div id="skyOut" class="out">Loading the default viewpoint…</div>
-    <p class="hint">Terrain: AWS Terrain Tiles at zoom 10 (pixels of 120 to 150 m), radius 28 km, with Earth curvature and standard refraction. Flat land gives a flat line: this clue needs relief.</p>
+<section id="hum" class="sec chapter f-white wrap">
+  <div class="grid">
+    <div class="c-1-7"><div class="panel"><canvas id="enfCv" width="1200" height="420"></canvas></div></div>
+    <div class="c-8-12 stack"><h2>Mains hum</h2>
+      <p>Recordings made near mains power often pick up a faint hum at the grid frequency: <b>50 Hz</b> across Europe, Africa, most of Asia and Australia, <b>60 Hz</b> across North America, much of South America, Taiwan, South Korea and western Japan. The frequency also wanders by a few hundredths of a hertz, in step across a whole grid, so forensic labs match that wander against grid logs to recover <i>when</i> a recording was made.</p>
+      <div class="ctl"><label>Choose an audio or video file<input id="enfFile" type="file" accept="audio/*,video/*"></label></div>
+      <pre id="enfOut" class="out empty">The first 5 minutes are analysed. The plot shows 30 to 200 Hz; dotted lines mark the 50 Hz and 60 Hz families.</pre>
+    </div>
   </div>
-  <div class="verdict"><span class="k">this recording</span><p>Not used. Audio only, and a view into forest canopy shows no horizon to match.</p></div>
+  <div class="verdict"><span class="dot"></span><b>This recording</b><p>No hum peaks in either family in the 5-minute stretch we tested. Expected outdoors, away from wiring.</p></div>
 </section>
 
-<!-- 5 VISUAL -->
-<section id="visual" class="chapter reveal">
-  <h2>Visual matching</h2>
-  <div class="prose"><p>The most common approach for photos: compare what is visible with imagery whose location is already known.</p></div>
-  <div class="bento">
-    <div class="panel"><span class="k">retrieval</span><h3>Search against street imagery</h3><p>Build a database of street-level photos with known positions (Google Street View, Mapillary, KartaView), turn each into a compact descriptor, and look up the nearest matches. Accurate where coverage is dense. The reference set is the cost: commercial imagery is billed per image.</p></div>
-    <div class="panel"><span class="k">learned models</span><h3>Predict from pixels</h3><p>Models trained on millions of geotagged photos (PlaNet, GeoCLIP, PIGEON) read vegetation, road markings, architecture and light. Usually right about the country, sometimes the city.</p></div>
+<section id="sun" class="sec chapter f-white wrap">
+  <div class="head-row"><h2>Sun and shadows</h2><p>At any instant the sun stands straight overhead at one point on Earth. A shadow's length gives the sun's height, and every place that sees the sun at that height lies on a circle around that point. Add the direction the shadow points and only one spot on the circle fits.</p></div>
+  <div class="ctl" data-ui>
+    <label>Time (UTC)<input id="sunTime" type="datetime-local" step="60"></label>
+    <label>Object height<input id="sunH" type="number" value="1.8" step="0.1" min="0.1"></label>
+    <label>Shadow length<input id="sunL" type="number" value="1.2" step="0.1" min="0.01"></label>
+    <label>Shadow bearing (optional)<input id="sunAz" type="number" placeholder="e.g. 315" min="0" max="360"></label>
+    <button id="sunGo" class="button" type="button">Locate</button>
   </div>
-  <div class="bento b2">
-    <div class="panel"><span class="k">clues</span><h3>Signs, text, infrastructure</h3><p>Script, phone number formats, plates, bollards, poles, road-line colours, driving side. Manual and very effective: it is how competitive GeoGuessr players work.</p></div>
-    <div class="panel"><span class="k">sky and weather</span><h3>Check the conditions</h3><p>Star fields and the moon's phase fix a latitude and a date. Cloud and rain can be checked against archived radar and satellite images for the claimed time and place.</p></div>
+  <div id="sunMap" class="map" style="height:460px"></div>
+  <div class="grid" style="margin-top:1rem">
+    <pre id="sunOut" class="out c-1-7"></pre>
+    <p class="hint c-8-12">Height and length in the same units; bearing in degrees from north. Sun position from standard astronomical formulas (about 0.1°, ignoring refraction). A clock error of 4 minutes moves the answer by 1° of longitude.</p>
   </div>
-  <div class="verdict"><span class="k">this recording</span><p>Not used. Trees and birdsong might suggest a region; they cannot pick a town.</p></div>
+  <div class="verdict"><span class="dot"></span><b>This recording</b><p>Not used. We analysed the audio track only; the frames would need a measurable shadow and a trusted clock.</p></div>
 </section>
 
-<!-- 6 DOPPLER -->
-<section id="doppler" class="chapter reveal">
-  <h2>Aircraft Doppler: the planes you can't hear</h2>
-  <div class="prose"><p>With every other clue empty, what is left is a sound nobody notices. Small propeller planes leave faint engine tones that slide down in pitch as they pass. Each slide gives a plane's speed and closest distance, and ADS-B says which planes were where.</p></div>
-
-  <div class="sub">
-    <h3>Find the curves</h3>
-    <div class="prose"><p>The hour is trees, birds and wind. Remove each frequency's steady background from the spectrogram and look at 60 to 260 Hz: two descending S-curves appear, marked by the dashed lines.</p></div>
-    <div class="panel figs"><img src="assets/overview.png" alt="spectrogram of the hour with two Doppler curves marked" loading="lazy"></div>
+<section id="skyline" class="sec chapter f-white wrap">
+  <div class="grid">
+    <div class="c-1-4 stack"><h2>Skyline and terrain</h2>
+      <p>Ridges form a horizon line that is close to unique for each viewpoint. Researchers render the horizon from an elevation model at many candidate points and compare it with the ridge traced from a photo. Click anywhere on the map to draw the 360° horizon a person standing there would see.</p>
+      <p class="hint">Terrain: AWS Terrain Tiles at zoom 10 (pixels of 120 to 150 m), radius 28 km, with Earth curvature and standard refraction. Flat land gives a flat line: this clue needs relief.</p>
+    </div>
+    <div class="c-5-12">
+      <div id="skyMap" class="map" style="height:380px"></div>
+      <canvas id="skyCv" width="1200" height="220"></canvas>
+      <pre id="skyOut" class="out">Loading the default viewpoint…</pre>
+    </div>
   </div>
+  <div class="verdict"><span class="dot"></span><b>This recording</b><p>Not used. Audio only, and a view into forest canopy shows no horizon to match.</p></div>
+</section>
 
-  <div class="sub">
-    <h3>Read speed and distance from each curve</h3>
-    <div class="prose"><p>For a source flying straight at constant speed <i>v</i>, the heard pitch slides from <i>f₀/(1-v/c)</i> down to <i>f₀/(1+v/c)</i>. The size of the drop gives the speed; how <em>quickly</em> it drops gives the closest distance. Drag the sliders to fit the real curve.</p></div>
-    <div class="panel">
-      <div class="sliders">
-        <label for="v">speed</label><input id="v" type="range" min="30" max="170" value="97"><output id="vv"></output>
-        <label for="d">closest dist.</label><input id="d" type="range" min="100" max="8000" step="50" value="2480"><output id="dv"></output>
-        <label for="f">engine tone f₀</label><input id="f" type="range" min="60" max="250" value="133"><output id="fv"></output>
+<section id="visual" class="sec chapter f-white wrap">
+  <div class="head-row"><h2>Visual matching</h2><p>The most common approach for photos: compare what is visible with imagery whose location is already known.</p></div>
+  <div class="cards2">
+    <div><h3>Search against street imagery</h3><p>Build a database of street-level photos with known positions (Google Street View, Mapillary, KartaView), turn each into a compact descriptor, and look up the nearest matches. Accurate where coverage is dense; the reference set is the cost, since commercial imagery is billed per image.</p></div>
+    <div><h3>Predict from pixels</h3><p>Models trained on millions of geotagged photos (PlaNet, GeoCLIP, PIGEON) read vegetation, road markings, architecture and light. Usually right about the country, sometimes the city.</p></div>
+    <div><h3>Signs, text, infrastructure</h3><p>Script, phone number formats, plates, bollards, poles, road-line colours, driving side. Manual and very effective: it is how competitive GeoGuessr players work.</p></div>
+    <div><h3>Check the conditions</h3><p>Star fields and the moon's phase fix a latitude and a date. Cloud and rain can be checked against archived radar and satellite images for the claimed time and place.</p></div>
+  </div>
+  <div class="verdict"><span class="dot"></span><b>This recording</b><p>Not used. Trees and birdsong might suggest a region; they cannot pick a town.</p></div>
+</section>
+
+<section id="doppler" class="band f-lime wrap">
+  <div class="grid" style="align-items:end">
+    <h2 class="c-1-7">The planes nobody heard</h2>
+    <div class="c-8-12 stack"><p class="lead">With every other clue empty, what is left is a sound nobody notices.</p>
+      <p>Small propeller planes leave faint engine tones that slide down in pitch as they pass. Each slide gives a plane's speed and closest distance, and ADS-B logs say which planes were where.</p></div>
+  </div>
+</section>
+
+<section class="sec f-dark wrap">
+  <div class="head-row"><h2>Find the curves</h2><p>The hour is trees, birds and wind. Remove each frequency's steady background from the spectrogram and look at 60 to 260 Hz: two descending S-curves appear, marked by the dashed lines.</p></div>
+  <figure class="figs"><img src="assets/overview.png" alt="Spectrogram of 25 minutes of the recording, 60 to 260 Hz, with two descending Doppler curves marked" loading="lazy"></figure>
+</section>
+
+<section class="sec f-dark wrap">
+  <div class="fit">
+    <div class="q"><h2>How fast, how close?</h2>
+      <p style="margin-top:1rem">For a source flying straight at speed <i>v</i>, the pitch slides from <i>f₀/(1−v/c)</i> down to <i>f₀/(1+v/c)</i>. The size of the drop gives the speed; how quickly it drops gives the closest distance. Fit the second plane by hand.</p>
+      <div class="sliders" data-ui>
+        <label for="v">Speed</label><input id="v" type="range" min="30" max="170" value="70"><output id="vv"></output>
+        <label for="d">Closest distance</label><input id="d" type="range" min="100" max="8000" step="50" value="5000"><output id="dv"></output>
+        <label for="f">Engine tone f₀</label><input id="f" type="range" min="60" max="250" value="120"><output id="fv"></output>
       </div>
-      <canvas id="cv" width="1200" height="340"></canvas>
-      <p class="hint">Line: your curve. Dots: event 2 as tracked in the real recording. Sound travel time is modelled, so emission and reception times differ.</p>
     </div>
-    <div class="split" style="margin-top:8px">
-      <div class="prose"><p>Each real curve is ridge-tracked on the spectrogram and fitted by least squares. An automatic detector written later finds the same two passes without hand tuning, 920.4 s apart against colsto's 920 s.</p>
-        <div class="scroll-x"><table class="data" id="evt"></table></div></div>
-      <div class="panel figs" style="margin:0"><figure><img src="assets/e1.png" alt="event 1 spectrogram and fit" loading="lazy"><figcaption>event 1</figcaption></figure>
-        <figure style="margin-top:14px"><img src="assets/e2.png" alt="event 2 spectrogram and fit" loading="lazy"><figcaption>event 2</figcaption></figure></div>
-    </div>
-  </div>
-
-  <div class="sub">
-    <h3>Search the whole country</h3>
-    <div class="prose"><p>ADS-B archive for 8 Sep 2026 (<a href="https://github.com/adsblol/globe_history_2026">adsb.lol</a>, 3.9 GB), known jets removed, every flight interpolated to 1 s. For each 200 m ground cell we compute when the closest approach would have been <em>heard</em>, using 3D slant distance over terrain and the speed of sound.</p></div>
-    <div class="panel funnel" id="funnel"></div>
-    <p class="hint">colsto reported about 73,000 and then 15,000 at the equivalent stages. Ours are larger because our speed and distance windows are deliberately wider.</p>
-  </div>
-
-  <div class="sub">
-    <h3>Score and rank</h3>
-    <div class="prose"><p>For each surviving cell the real flight path is replayed, the Doppler curve that position would have heard is predicted, and both events are compared against the recording with one shared clock offset.</p></div>
-    <div class="split rev" style="margin-top:20px">
-      <div class="panel" style="margin:0"><div id="map" class="map"></div><p class="hint">Top 25 distinct flight pairs, rounded to about 1 km. Filled: rank 1.</p></div>
-      <div class="scroll-x"><table class="data" id="topTbl"></table></div>
-    </div>
-    <div class="verdict" id="verdictBox"><span class="k">this recording</span><p id="verdict"></p></div>
-  </div>
-
-  <div class="sub">
-    <h3>Check it where the answer is known</h3>
-    <div class="prose"><p>To test the detector itself, we ran it on 10 hours of audio from a public webcam whose location is published (2026-11-08, 13:00 to 23:00 UTC), with that day's full ADS-B archive. The camera's position was used only to grade the result, never to steer the search.</p></div>
-    <div class="readouts">
-      <div><b>3 of 5</b><span>propeller planes within 8 km detected</span></div>
-      <div><b>1.5 s</b><span>timing error on the best match, a Pilatus PC-12</span></div>
-      <div><b>141.7</b><span>m/s heard, against 141.9 from ADS-B</span></div>
-      <div><b>4.7 km</b><span>distance heard, against 5.0 km</span></div>
-    </div>
-    <p class="hint" id="liveStatus">7 of the 10 passes the detector accepted match no logged aircraft. <b>The blind search fails:</b> scoring 17,914 candidate cells over the full day (with a penalty for predicted loud propeller passes that went unheard), the top pick lands about 900 km from the camera, and the best cell within 5 km of it ranks 479th (top 3%). Scored the same way, the true position would rank 16th. With these false detections, the method narrows the map but does not find the camera.</p>
+    <div class="plot"><canvas id="cv" width="1200" height="760"></canvas><p class="hint">Line: your curve. Dots: the second plane as tracked in the real recording. Sound travel time is modelled.</p></div>
+    <div class="fig"><div class="big" id="misfit">–<small>Hz off</small></div><p class="how">Root-mean-square gap between your curve and the tracked points. The least-squares fit gets to <span id="lsq">0.7</span> Hz.</p></div>
   </div>
 </section>
 
-<!-- STATUS -->
-<section id="status" class="chapter reveal">
-  <h2>Status: partial reproduction</h2>
-  <div class="prose"><p>The first stages reproduce: two Doppler curves fitted under 1 Hz error, the gap between them within 3 s of colsto's, and a national search plus silence filter that runs end to end. The final scoring does not yet produce one clear winner. What is missing:</p></div>
-  <ol class="steps">
-    <li><b>Tighter event windows.</b> colsto measured each curve's speed and distance range by hand. Ours are deliberately generous, so many more flight pairs qualify.</li>
-    <li><b>Whole-hour silence.</b> The silence filter covers only the gap between the events and only propeller aircraft. The full hour, with jets and helicopters, would prune far more.</li>
-    <li><b>Trajectory detail.</b> Scoring on raw ADS-B with turns, climbs and harmonics is the step colsto says takes 15,000 candidates down to one.</li>
-    <li><b>Date boundary.</b> Only the 8 Sep UTC archive was used. A recording in a US evening falls partly in 9 Sep UTC.</li>
+<section class="sec f-dark wrap">
+  <div class="grid">
+    <div class="c-1-5 stack"><h2>Two passes, 920 s apart</h2>
+      <p>Each real curve is ridge-tracked on the spectrogram and fitted by least squares. An automatic detector written later finds the same two passes without hand tuning, 920.4 s apart against colsto's 920 s.</p>
+      <div class="scroll-x"><table class="data" id="evt"></table></div></div>
+    <div class="c-6-12 figs"><figure><img src="assets/e1.png" alt="Event 1: spectrogram and fitted Doppler curve" loading="lazy"><figcaption>First plane</figcaption></figure>
+      <figure style="margin-top:1.4rem"><img src="assets/e2.png" alt="Event 2: spectrogram and fitted Doppler curve" loading="lazy"><figcaption>Second plane</figcaption></figure></div>
+  </div>
+</section>
+
+<section class="sec f-dark wrap mio">
+  <div class="head-row"><h2>Search the whole country</h2><p>ADS-B archive for 8 Sep 2026 (<a href="https://github.com/adsblol/globe_history_2026">adsb.lol</a>, 3.9 GB), known jets removed, every flight interpolated to 1 s. For each 200 m ground cell we compute when each plane's closest approach would have been <em>heard</em>, using 3D slant distance over terrain and the speed of sound.</p></div>
+  <svg id="mioSvg" viewBox="0 0 1200 270" role="img" aria-label="Candidates scattered, then narrowed, then ranked"></svg>
+  <div class="cols" id="mioCols"></div>
+  <details class="why"><summary>Every stage, with counts</summary><div id="funnel"></div><p>colsto reported about 73,000 and then 15,000 at the equivalent stages. Ours are larger because our speed and distance windows are deliberately wider.</p></details>
+</section>
+
+<section class="sec f-dark wrap">
+  <div class="head-row"><h2>Score and rank</h2><p>For each surviving cell the real flight path is replayed, the Doppler curve that position would have heard is predicted, and both passes are compared against the recording with one shared clock offset.</p></div>
+  <div class="spark-card" id="spark" data-reveal>
+    <div class="sp-head"><div><span class="hint">Score by rank, top 25 distinct flight pairs</span><b class="big" id="spBig">–</b></div><div class="seg" role="group" aria-label="Range"><button type="button" aria-pressed="true" data-n="25">Top 25</button><button type="button" aria-pressed="false" data-n="5">Top 5</button></div></div>
+    <div class="sp-wrap"><svg class="spk" viewBox="0 0 600 140" preserveAspectRatio="none" aria-hidden="true"></svg><span class="tip"></span></div>
+    <div class="sp-x"><span id="spX0">#1</span><span id="spX1"></span></div>
+    <p class="hint">Hover the line. A clear winner would stand far above rank 2; here the line is almost flat.</p>
+  </div>
+  <div class="grid" style="margin-top:3rem">
+    <div class="c-1-7"><div id="map" class="map" style="height:460px"></div><p class="hint">Top 25 distinct flight pairs, rounded to about 1 km. The lime dot is rank 1.</p></div>
+    <div class="c-8-12"><div class="rcpt" id="rcpt"><div class="rc-head"><span class="hint">Evidence receipt · this recording</span><b>Partial match</b></div><div class="rc-lines" id="rcLines"></div><div class="rc-note"><span class="dot"></span><p id="verdict"></p></div><div class="barcode" aria-hidden="true"></div></div>
+      <details class="why"><summary>Top 10 cells</summary><div class="scroll-x"><table class="data" id="topTbl"></table></div></details></div>
+  </div>
+</section>
+
+<section id="live" class="sec f-dark wrap">
+  <div class="head-row"><h2>Check it where the answer is known</h2><p>We ran the detector on 10 hours of audio from a public webcam whose location is published (8 Nov 2026, 13:00 to 23:00 UTC), with that day's full ADS-B archive. The camera's position was used only to grade the result, never to steer the search.</p></div>
+  <div class="live">
+    <div class="names" id="liveNames" role="group" aria-label="Propeller planes within 12 km"><h3>Props within 12 km</h3></div>
+    <div class="stage"><svg class="scope" id="scope" viewBox="-120 -120 240 240" role="img" aria-label="Aircraft passes by bearing and distance from the camera"></svg>
+      <div class="plane"><img id="planeImg" src="assets/pc12.jpg" alt=""></div></div>
+    <div class="fact" id="liveFact" aria-live="polite"></div>
+  </div>
+  <div class="lanes" style="margin-top:4rem"><svg id="lanes" viewBox="0 0 1200 170" role="img" aria-label="Ten hours: logged flyovers against detector passes"></svg>
+    <p class="hint">Top row: aircraft logged within 12 km, lime when the detector heard them. Bottom row: every pass the detector accepted; white ones match no logged aircraft.</p></div>
+  <div class="nums3" style="margin-top:4rem">
+    <div><b>~900 km</b><span>from the camera to the blind search's top pick</span></div>
+    <div><b>479th</b><span>rank of the best cell within 5 km, of 17,914 (top 3%)</span></div>
+    <div><b>16th</b><span>where the true position would rank, scored the same way</span></div>
+  </div>
+  <p id="liveStatus" style="margin-top:2rem">The detector heard 3 of the 5 propeller planes within 8 km; the best match, a Pilatus PC-12, landed 1.5 s from its logged pass at 141.7 m/s against 141.9. But 7 of the 10 passes it accepted match no logged aircraft, and with those false passes the blind search narrows the map without finding the camera.</p>
+</section>
+
+<section id="status" class="sec f-white wrap">
+  <div class="head-row"><h2>How far the reproduction got</h2><p>colsto's method has five steps. On his own recording we reach the fourth; the last one, a single location, is still open.</p></div>
+  <div class="trk2" id="repro" data-reveal></div>
+  <div class="tiles4" style="margin-top:4rem">
+    <div class="lead-tile"><h2>What reproduced</h2><p>The first stages hold up on colsto's own recording.</p></div>
+    <div id="stats"></div>
+    <div><b>3 of 5</b><span>props within 8 km heard on the live webcam</span></div>
+    <div><b>1.5 s</b><span>timing error on the best live match</span></div>
+  </div>
+</section>
+
+<section class="sec f-white wrap">
+  <div class="head-row"><h2>What is still missing</h2><p>The final scoring does not yet produce one clear winner. Four gaps, in the order we would close them:</p></div>
+  <ol class="missing">
+    <li><div><b>Tighter event windows</b><span>colsto measured each curve's speed and distance range by hand. Ours are deliberately generous, so many more flight pairs qualify.</span></div></li>
+    <li><div><b>Whole-hour silence</b><span>The silence filter covers only the gap between the passes and only propeller aircraft. The full hour, with jets and helicopters, would prune far more.</span></div></li>
+    <li><div><b>Trajectory detail</b><span>Scoring on raw ADS-B with turns, climbs and harmonics is the step colsto says takes 15,000 candidates down to one.</span></div></li>
+    <li><div><b>Date boundary</b><span>Only the 8 Sep UTC archive was used. A recording in a US evening falls partly in 9 Sep UTC.</span></div></li>
   </ol>
-  <div class="split" style="margin-top:28px">
-    <div><h3>Run it</h3>
-      <div class="panel" style="margin-top:10px"><pre>git clone https://github.com/kvnloo/doppler-geoloc
+</section>
+
+<section id="run" class="sec f-white wrap">
+  <div class="grid">
+    <div class="c-1-6 stack"><h2>Run it</h2>
+      <pre class="code">git clone https://github.com/kvnloo/doppler-geoloc
 cd doppler-geoloc/pipeline
 uv venv && uv pip install numpy scipy pandas \
   pyarrow soundfile matplotlib pillow
-# stage order and data: pipeline/README.md</pre></div></div>
-    <div><h3>How to defeat it</h3>
-      <p style="color:var(--ink2);margin-top:10px">The technique needs prop traffic a spectrogram can pick up, good ADS-B coverage and a known date. Cutting the audio, heavy noise suppression or removing the low band defeats it more reliably than a simple high-pass, per colsto's tests. This page shows only rounded candidate locations and identifies no camera.</p></div>
+# stage order and data: pipeline/README.md</pre></div>
+    <div class="c-7-12 stack"><h2>How to defeat it</h2>
+      <p>The technique needs prop traffic a spectrogram can pick up, good ADS-B coverage and a known date. Cutting the audio, heavy noise suppression or removing the low band defeats it more reliably than a simple high-pass, per colsto's tests. This page shows only rounded candidate locations and identifies no camera.</p></div>
   </div>
 </section>
-
-<footer><p>Audio © its uploader, analysed but not redistributed. ADS-B: adsb.lol (ODbL/CC0). Elevation: <a href="https://registry.opendata.aws/terrain-tiles/">AWS Terrain Tiles</a>. Map: © OpenStreetMap contributors. Method: colsto. Type: Instrument Sans and IBM Plex Mono (SIL OFL). Code: <a href="https://github.com/kvnloo/doppler-geoloc">github.com/kvnloo/doppler-geoloc</a>, MIT. No analytics. Press <span class="mono">t</span> to switch theme.</p></footer>
-</div>
-</div>
 </main>
 
+<footer class="foot f-dark wrap">
+  <svg id="footMark" viewBox="0 0 1200 300" preserveAspectRatio="xMinYMax meet" aria-hidden="true"></svg>
+  <div class="links">
+    <ul class="l1"><li><a href="#clues">The six clues</a></li><li><a href="#doppler">Aircraft Doppler</a></li><li><a href="#live">Live test</a></li><li><a href="#status">Status</a></li></ul>
+    <ul class="l2"><li><a href="https://github.com/kvnloo/doppler-geoloc">Code, MIT</a></li><li><a href="https://www.youtube.com/watch?v=UytYrhYLOKI">colsto's video</a></li><li><a href="https://github.com/adsblol/globe_history_2026">adsb.lol archive</a></li></ul>
+    <div class="l3"><p class="credits">Audio © its uploader, analysed but not redistributed. ADS-B: adsb.lol (ODbL/CC0). Elevation: <a href="https://registry.opendata.aws/terrain-tiles/">AWS Terrain Tiles</a>. Map: © OpenStreetMap contributors. Method: colsto. Type: Bricolage Grotesque (SIL OFL). No analytics.</p>
+      <p class="credits">Aircraft photos: <a href="https://commons.wikimedia.org/w/index.php?curid=44960013">Bidgee</a>, CC BY-SA 3.0; <a href="https://commons.wikimedia.org/w/index.php?curid=68420924">Matti Blume</a>, CC BY-SA 4.0; <a href="https://commons.wikimedia.org/w/index.php?curid=44305082">Civil Air Patrol</a>, CC BY 2.0; <a href="https://commons.wikimedia.org/w/index.php?curid=191888123">Alan Wilson from Peterborough, Cambs, UK</a>, CC BY-SA 2.0; <a href="https://commons.wikimedia.org/w/index.php?curid=84535714">Ronnie Macdonald from Chelmsford, United Kingdom</a>, CC BY 2.0; <a href="https://commons.wikimedia.org/w/index.php?curid=7093198">Georges Seguin (Okki)</a>, CC BY-SA 3.0. Types shown are the models logged nearby, not the exact airframes.</p></div>
+  </div>
+  <div class="last"><span>doppler-geoloc, an open partial reproduction</span><a class="button" href="#top">Back to top</a></div>
+</footer>
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="assets/hud.js"></script>
 <script>
+
+/* page helpers shared with the demo script below */
+const cssv = (n, el = document.documentElement) => getComputedStyle(el).getPropertyValue(n).trim();
+const SVGNS = 'http://www.w3.org/2000/svg';
+const sv = (tag, a = {}, ...kids) => { const n = document.createElementNS(SVGNS, tag); for (const [k, v] of Object.entries(a)) n.setAttribute(k, v); n.append(...kids); return n; };
+const nf = n => n.toLocaleString('en-US');
+
 const R2D=180/Math.PI,D2R=Math.PI/180,RE=6371008.8,MOB=()=>innerWidth<600;
 const $=id=>document.getElementById(id),fmt=n=>n.toLocaleString('en-US');
 function mkMap(id,c,z,o={}){const m=L.map(id,{worldCopyJump:true,scrollWheelZoom:false,...o}).setView(c,z);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,className:'tiles',attribution:'© OpenStreetMap'}).addTo(m);return m}
 function dest(lat,lon,brg,dist){const d=dist/RE,b=brg*D2R,p1=lat*D2R,l1=lon*D2R;const p2=Math.asin(Math.sin(p1)*Math.cos(d)+Math.cos(p1)*Math.sin(d)*Math.cos(b));const l2=l1+Math.atan2(Math.sin(b)*Math.sin(d)*Math.cos(p1),Math.cos(d)-Math.sin(p1)*Math.sin(p2));return[p2*R2D,((l2*R2D+540)%360)-180]}
 const setOut=(id,txt,empty)=>{const o=$(id);o.textContent=txt;o.classList.toggle('empty',!!empty)};
-
-/* ---------- rail: highlight the chapter in view ---------- */
-(()=>{const links=[...document.querySelectorAll('.rail a')],by=Object.fromEntries(links.map(a=>[a.hash.slice(1),a]));
- const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){links.forEach(a=>a.classList.remove('on'));by[e.target.id]?.classList.add('on')}}),{rootMargin:'-35% 0px -60% 0px'});
- Object.keys(by).forEach(id=>$(id)&&io.observe($(id)))})();
 
 /* ---------- clue ladder ---------- */
 (()=>{const MAX=7,MIN=1,x=m=>(MAX-Math.log10(m))/(MAX-MIN)*100;
@@ -344,9 +297,9 @@ $('exifFile').onchange=async e=>{
 function fft(re,im){const n=re.length;for(let i=1,j=0;i<n;i++){let b=n>>1;for(;j&b;b>>=1)j^=b;j^=b;if(i<j){[re[i],re[j]]=[re[j],re[i]];[im[i],im[j]]=[im[j],im[i]]}}
  for(let len=2;len<=n;len<<=1){const a=-2*Math.PI/len,wr=Math.cos(a),wi=Math.sin(a);for(let i=0;i<n;i+=len){let cr=1,ci=0;for(let k=0;k<len/2;k++){const ur=re[i+k],ui=im[i+k],vr=re[i+k+len/2]*cr-im[i+k+len/2]*ci,vi=re[i+k+len/2]*ci+im[i+k+len/2]*cr;re[i+k]=ur+vr;im[i+k]=ui+vi;re[i+k+len/2]=ur-vr;im[i+k+len/2]=ui-vi;const t=cr*wr-ci*wi;ci=cr*wi+ci*wr;cr=t}}}}
 let lastSpec=null;
-function drawEnf(seg){const c=$('enfCv'),g=c.getContext('2d'),W=c.width,H=c.height,fs=MOB()?34:20;g.fillStyle=cssv('--plot');g.fillRect(0,0,W,H);
+function drawEnf(seg){const c=$('enfCv'),g=c.getContext('2d'),W=c.width,H=c.height,fs=MOB()?34:24;g.fillStyle=cssv('--plot');g.fillRect(0,0,W,H);
  [50,60,100,120,150,180].forEach(fq=>{const x=(fq-30)/170*W,col=fq%50?cssv('--acc'):cssv('--warn');g.strokeStyle=col;g.globalAlpha=.5;g.setLineDash([2,6]);g.beginPath();g.moveTo(x,fs+10);g.lineTo(x,H);g.stroke();g.globalAlpha=1;g.setLineDash([]);
-  g.fillStyle=col;g.font=fs+'px "IBM Plex Mono",monospace';g.fillText(fq,x+4,fs+2)});
+  g.fillStyle=col;g.font=fs+'px ui-monospace,monospace';g.fillText(fq,x+4,fs+2)});
  if(!seg)return;const lo=Math.min(...seg),hi=Math.max(...seg);
  g.strokeStyle=cssv('--ink');g.lineWidth=1.5;g.beginPath();seg.forEach((v,i)=>{const x=i/seg.length*W,yy=H-10-(v-lo)/(hi-lo+1e-9)*(H-fs-30);i?g.lineTo(x,yy):g.moveTo(x,yy)});g.stroke()}
 drawEnf(null);
@@ -425,13 +378,13 @@ function drawSky(p){const c=$('skyCv'),g=c.getContext('2d'),W=c.width,H=c.height
  g.beginPath();g.moveTo(0,H-22);for(let a=0;a<=360;a++)g.lineTo(a/360*W,y(p[a%360]));g.lineTo(W,H-22);g.closePath();g.fillStyle=cssv('--ground');g.fill();
  g.strokeStyle=cssv('--acc');g.lineWidth=2;g.beginPath();for(let a=0;a<=360;a++)g[a?'lineTo':'moveTo'](a/360*W,y(p[a%360]));g.stroke();
  g.fillStyle=cssv('--plot');g.fillRect(0,H-22,W,22);
- g.fillStyle=cssv('--mute');g.font=(MOB()?34:16)+'px "IBM Plex Mono",monospace';['N','E','S','W','N'].forEach((s,i)=>g.fillText(s,Math.min(W-22,i*W/4+(i?-5:4)),H-4))}
+ g.fillStyle=cssv('--mute');g.font=(MOB()?34:22)+'px ui-monospace,monospace';['N','E','S','W','N'].forEach((s,i)=>g.fillText(s,Math.min(W-22,i*W/4+(i?-5:4)),H-4))}
 const skyPin=ll=>{if(skyMk)skyMk.remove();skyMk=L.circleMarker(ll,{radius:7,color:cssv('--acc'),weight:2}).addTo(skyMap);horizon(ll[0]??ll.lat,ll[1]??ll.lng).catch(err=>setOut('skyOut','Elevation fetch failed: '+err))};
 skyMap.on('click',e=>skyPin(e.latlng));skyPin([37.7459,-119.5936]);
 
 /* ---------- aircraft Doppler ---------- */
 let R=null,topLayer=null,dmap=null;
-function drawTop(){if(!R)return;topLayer.clearLayers();const acc=cssv('--acc'),ink=cssv('--ink');
+function drawTop(){if(!R)return;topLayer.clearLayers();const acc=cssv('--acc',$('map')),ink=cssv('--ink',$('map'));
  R.top_candidates.forEach((c,i)=>L.circleMarker([c.lat,c.lon],{radius:i?5:9,color:i?ink:acc,weight:1.5,fillColor:acc,fillOpacity:i?0:.85}).bindPopup(`#${c.rank}  score ${c.score}`).addTo(topLayer))}
 fetch('assets/results.json').then(r=>r.json()).then(J=>{R=J;const E=R.events;
  $('stats').innerHTML=[[R.gap_s+' s','between the two plane passes (colsto: '+R.gap_colsto_s+' s)'],[E.e1.speed_ms+' / '+E.e2.speed_ms,'fitted speeds, m/s'],
@@ -446,6 +399,7 @@ fetch('assets/results.json').then(r=>r.json()).then(J=>{R=J;const E=R.events;
  const s=R.top_scores,sep=((s[0]-s[1])/s[0]*100).toFixed(1);
  $('verdict').innerHTML=`<b>No clear winner yet.</b> Rank 1 beats rank 2 by only ${sep}%, and the top places spread across several states; colsto's winner stood well clear. Press reports name ${R.reported_area.name.replace(' (as named in press)','')}: candidates there survive every filter, and the best ranks <b>#${R.reported_area.best_rank}</b>. That town was used only to grade the result, never to steer the search.`;
  dmap=mkMap('map',[38.5,-96],4,{worldCopyJump:false});topLayer=L.layerGroup().addTo(dmap);drawTop();
+ buildReceipt(R);buildSpark(R);buildTrack(R);
  window.__ev2=E.e2;fetch('assets/e2_track.json').then(r=>r.json()).then(p=>{window.__pts=p;drawCurve()});
 });
 const C=343,cv=$('cv'),cx=cv.getContext('2d');
@@ -455,16 +409,125 @@ function curve(f0,v,d,t){let lo=-600,hi=600;const tr=tau=>tau+Math.hypot(v*tau,d
 function drawCurve(){
  const v=+$('v').value,d=+$('d').value,f0=+$('f').value;
  $('vv').textContent=v+' m/s';$('dv').textContent=(d/1000).toFixed(2)+' km';$('fv').textContent=f0+' Hz';
- const W=cv.width,H=cv.height,fmin=60,fmax=260,X=t=>(t+120)/240*W,Y=f=>H-(f-fmin)/(fmax-fmin)*H,fs=MOB()?30:15;
- cx.fillStyle=cssv('--plot');cx.fillRect(0,0,W,H);cx.strokeStyle=cssv('--grid');cx.fillStyle=cssv('--mute');cx.font=fs+'px "IBM Plex Mono",monospace';cx.lineWidth=1;
+ const W=cv.width,H=cv.height,fmin=60,fmax=260,X=t=>(t+120)/240*W,Y=f=>H-(f-fmin)/(fmax-fmin)*H,fs=MOB()?30:22;
+ cx.fillStyle=cssv('--plot',cv);cx.fillRect(0,0,W,H);cx.strokeStyle=cssv('--grid',cv);cx.fillStyle=cssv('--mute',cv);cx.font=fs+'px ui-monospace,monospace';cx.lineWidth=1;
  for(let f=80;f<=240;f+=40){cx.beginPath();cx.moveTo(0,Y(f));cx.lineTo(W,Y(f));cx.stroke();cx.fillText(f+' Hz',6,Y(f)-5)}
  for(let t=-100;t<=100;t+=50){cx.beginPath();cx.moveTo(X(t),0);cx.lineTo(X(t),H);cx.stroke();cx.fillText(t+' s',X(t)+5,H-6)}
- if(window.__pts){cx.fillStyle=cssv('--ink');cx.globalAlpha=.55;__pts.forEach(([t,f])=>cx.fillRect(X(t)-1.5,Y(f)-1.5,3,3));cx.globalAlpha=1}
- cx.strokeStyle=cssv('--acc');cx.lineWidth=3;cx.beginPath();
- for(let i=0;i<=300;i++){const t=-120+i*0.8,f=curve(f0,v,d,t);i?cx.lineTo(X(t),Y(f)):cx.moveTo(X(t),Y(f))}cx.stroke()}
+ if(window.__pts){cx.fillStyle=cssv('--ink',cv);cx.globalAlpha=.55;__pts.forEach(([t,f])=>cx.fillRect(X(t)-1.5,Y(f)-1.5,3,3));cx.globalAlpha=1}
+ cx.strokeStyle=cssv('--acc',cv);cx.lineWidth=3;cx.beginPath();
+ for(let i=0;i<=300;i++){const t=-120+i*0.8,f=curve(f0,v,d,t);i?cx.lineTo(X(t),Y(f)):cx.moveTo(X(t),Y(f))}cx.stroke();window.onFit&&onFit(v,d,f0)}
 ['v','d','f'].forEach(id=>$(id).addEventListener('input',drawCurve));drawCurve();
 
-addEventListener('themechange',()=>{sunGo();exifMark();if(lastProf)drawSky(lastProf);drawEnf(lastSpec);if(skyMk)skyMk.setStyle({color:cssv('--acc')});drawTop();drawCurve()});
+
+/* ---- borrowed from ephemeral-ui: receipt (line items, the unusual one flagged) ---- */
+function buildReceipt(R){const E=R.events,s=R.top_scores,m=((s[0]-s[1])/s[0]*100).toFixed(1);
+ const L=[['Doppler passes found','2, both fitted',''],['Gap between passes',R.gap_s+' s (colsto '+R.gap_colsto_s+' s)',''],['Fitted speeds',E.e1.speed_ms+' / '+E.e2.speed_ms+' m/s',''],
+  ['Fit error',E.e1.rms_hz+' / '+E.e2.rms_hz+' Hz',''],['Flight points searched',nf(R.funnel[0].n),''],['Cells scored',nf(R.funnel[5].n),''],['Rank 1 lead over rank 2',m+'%','odd'],['Press-named town ranks','#'+R.reported_area.best_rank,'odd']];
+ $('rcLines').innerHTML=L.map(([a,b,c])=>`<div class="rc-li ${c}"><span>${a}</span><span>${b}</span></div>`).join('')}
+/* ---- borrowed from ephemeral-ui: metric sparkline with crosshair and range toggle ---- */
+function buildSpark(R){const box=$('spark'),svg=box.querySelector('svg'),tip=box.querySelector('.tip'),big=$('spBig'),W=600,H=140;
+ const all=R.top_candidates.map(c=>[c.rank,c.score]),lo=Math.min(...all.map(p=>p[1]),R.reported_area.best_score)-.15,hi=all[0][1]+.15;
+ const area=sv('path',{class:'area'}),line=sv('path',{class:'line'}),cross=sv('line',{class:'cross',y1:0,y2:H}),ref=sv('line',{class:'ref',x1:0,x2:W});
+ const dot=document.createElement('i'),rl=document.createElement('span');dot.className='hdot';rl.className='reft';svg.append(ref,area,line,cross);box.querySelector('.sp-wrap').append(dot,rl);let cur=all;
+ const Y=v=>H-8-(v-lo)/(hi-lo)*(H-16);ref.setAttribute('y1',Y(R.reported_area.best_score));ref.setAttribute('y2',Y(R.reported_area.best_score));rl.style.top=Y(R.reported_area.best_score)/H*100+'%';rl.textContent='press-named town, best cell (#'+R.reported_area.best_rank+')';
+ const X=k=>k/(cur.length-1)*W,draw=()=>{const d=cur.map((p,k)=>`${k?'L':'M'}${X(k).toFixed(1)} ${Y(p[1]).toFixed(1)}`).join(' ');line.setAttribute('d',d);area.setAttribute('d',d+` L${W} ${H} L0 ${H} Z`)};
+ const ends=()=>{$('spX0').textContent='rank #'+cur[0][0];$('spX1').textContent='rank #'+cur[cur.length-1][0]};
+ const setBig=p=>big.innerHTML=`${p[1].toFixed(2)}<small> score at #${p[0]}</small>`;draw();ends();setBig(cur[0]);
+ const wrap=box.querySelector('.sp-wrap');
+ wrap.addEventListener('pointermove',e=>{const b=svg.getBoundingClientRect(),k=Math.max(0,Math.min(cur.length-1,Math.round((e.clientX-b.left)/b.width*(cur.length-1)))),x=X(k),y=Y(cur[k][1]);
+  dot.style.left=x/W*100+'%';dot.style.top=y/H*100+'%';cross.setAttribute('x1',x);cross.setAttribute('x2',x);wrap.classList.add('hov');tip.textContent=`#${cur[k][0]} · ${cur[k][1].toFixed(2)}`;tip.style.left=x/W*100+'%';setBig(cur[k])});
+ wrap.addEventListener('pointerleave',()=>{wrap.classList.remove('hov');setBig(cur[0])});
+ box.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{box.querySelectorAll('.seg button').forEach(o=>o.setAttribute('aria-pressed',o===b));cur=all.slice(0,+b.dataset.n);draw();ends();setBig(cur[0])})}
+/* ---- borrowed from ephemeral-ui: tracking rail, filled to the step reached ---- */
+function buildTrack(R){const E=R.events,st=[['Hear the curves','two passes, also found automatically'],['Fit speed and distance',`${E.e1.rms_hz} and ${E.e2.rms_hz} Hz fit error`],['Match the gap',`${R.gap_s} s against colsto's ${R.gap_colsto_s} s`],['Search the country',`${nf(R.funnel[4].n)} cells survive`],['One location','not yet: no clear winner']],at=3;
+ $('repro').innerHTML=`<div class="rail"><i class="fill" style="--p:${at/(st.length-1)*100}%"></i><span class="veh" style="--p:${at/(st.length-1)*100}%"></span></div><ol>${st.map(([a,b],i)=>`<li class="${i<=at?'ok':''}"><i></i><b>${a}</b><span>${b}</span></li>`).join('')}</ol>`}
+/* entrances: the parts of each section rise in turn (base.js reveals them once) */
+document.querySelectorAll('main > section:not(.hero), footer').forEach(sec => {
+  let i = 0;
+  sec.querySelectorAll('h2, .head-row p, .stack > *, .statement, figure, .cards2 > div, .verdict, .tiles4 > div:not(#stats), .missing li, .nums3 > div, .fit > div, .live > div, .lanes, .mio svg, .mio .cols, #prec, #map, .panel').forEach(el => {
+    if (el.closest('[data-reveal]')) return;
+    el.setAttribute('data-reveal', ''); el.style.setProperty('--i', Math.min(i++, 6));
+  });
+});
+
+/* hand fit: misfit against the tracked points of plane 2, recomputed on every input */
+window.onFit = (v, d, f0) => {
+  const P = window.__pts, out = document.getElementById('misfit'); if (!P || !out) return;
+  let s = 0; for (const [t, f] of P) { const e = curve(f0, v, d, t) - f; s += e * e; }
+  const r = Math.sqrt(s / P.length);
+  out.firstChild.nodeValue = r < 10 ? r.toFixed(1) : Math.round(r);
+  if (window.__ev2) document.getElementById('lsq').textContent = __ev2.rms_hz;
+};
+
+/* many into one: the search funnel drawn with the motif */
+fetch('assets/results.json').then(r => r.json()).then(R => {
+  const svg = document.getElementById('mioSvg'), F = R.funnel, N = 150;
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const dots = [];
+  for (let k = 0; k < N; k++) {
+    const sx = 20 + rnd() * 360, sy = 20 + rnd() * 230;
+    const mx = 430 + (k % 50) * 6.6, my = 120 + Math.floor(k / 50) * 15;
+    const rows = 6, per = 25, j = k % (rows * per);
+    const ex = 830 + (j % per) * 14.5, ey = 60 + Math.floor(j / per) * 30;
+    const zone = k < 50 ? [sx, sy, rnd() < .5 ? '#3a3a3a' : '#5a5a5a'] : k < 100 ? [mx, my, '#9a9a9a'] : [ex, ey, '#dafa9c'];
+    dots.push(sv('circle', { cx: zone[0], cy: zone[1], r: 5.5, fill: zone[2], style: `transform:translate(${(sx - zone[0]).toFixed(0)}px,${(sy - zone[1]).toFixed(0)}px)` }));
+  }
+  svg.append(...dots);
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { dots.forEach((c, k) => { c.style.transition = `transform 1400ms cubic-bezier(.16,1,.3,1) ${k % 50 * 12}ms`; c.style.transform = 'none'; }); io.disconnect(); } }), { threshold: .3 });
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) dots.forEach(c => c.style.transform = 'none'); else io.observe(svg);
+  document.getElementById('mioCols').innerHTML = [
+    ['Gather', F[2].n, 'ground cells where some logged prop could have made the second pass'],
+    ['Narrow', F[4].n, 'that also hear the first pass 917 s earlier, and no loud prop in between'],
+    ['Rank', F[6].n, 'scored against the recording; no single cell stands clear']].map(([w, n, p]) => `<div><b>${w}</b><div class="n">${nf(n)}</div><p>${p}</p></div>`).join('');
+});
+
+/* live test: a range scope around the camera (bearing and distance only), the props as a list, ten hours as two lanes */
+const NAMES = { PC12: 'Pilatus PC-12', P210: 'Cessna P210', BE58: 'Beechcraft Baron', AA5: 'Grumman AA-5', C172: 'Cessna 172', P28A: 'Piper Cherokee' };
+const PICS = { PC12: 'pc12', P210: 'p210', BE58: 'be58', AA5: 'aa5', C172: 'c172', P28A: 'p28a' };
+fetch('assets/live_scope.json').then(r => r.json()).then(J => {
+  const scope = document.getElementById('scope'), lanes = document.getElementById('lanes'), names = document.getElementById('liveNames');
+  const fact = document.getElementById('liveFact'), img = document.getElementById('planeImg'), F = J.flyovers, K = 104 / 12;
+  const hhmm = t => { const m = 13 * 60 + Math.round(t / 60); return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`; };
+  const xy = f => [Math.sin(f.brg * Math.PI / 180) * f.km * K, -Math.cos(f.brg * Math.PI / 180) * f.km * K];
+  scope.append(sv('circle', { class: 'r1', r: 104 }), sv('circle', { class: 'r2', r: 104 * 2 / 3 }), sv('circle', { class: 'r3', r: 104 / 3 }),
+    ...[[12, 104], [8, 69.3], [4, 34.7]].map(([km, r]) => sv('text', { x: (r * .7 + 2).toFixed(1), y: (r * .7 + 8).toFixed(1) }, `${km} km`)),
+    ...['N', 'E', 'S', 'W'].map((c, i) => sv('text', { x: [0, 111, 0, -114][i] - 2, y: [-109, 3, 116, 3][i] }, c)),
+    sv('circle', { r: 2.6, fill: '#fff' }));
+  const blips = new Map(), dotsTop = new Map();
+  F.forEach(f => {
+    const [x, y] = xy(f), c = sv('circle', { class: 'b ' + (f.prop ? (f.heard ? 'heard' : 'miss') : 'jet'), cx: x.toFixed(1), cy: y.toFixed(1), r: f.prop ? 5.5 : 3 });
+    c.append(sv('title', {}, `${NAMES[f.type] || f.type} at ${hhmm(f.t)} UTC, ${f.km} km`));
+    c.addEventListener('click', () => pick(f)); scope.append(c); blips.set(f, c);
+  });
+  const props = F.filter(f => f.prop), btns = new Map();
+  props.forEach(f => { const b = document.createElement('button'); b.type = 'button'; b.innerHTML = `${NAMES[f.type] || f.type}<small>${hhmm(f.t)}</small>`;
+    b.addEventListener('click', () => pick(f)); names.append(b); btns.set(f, b); });
+  function pick(f) {
+    blips.forEach((c, g) => { c.classList.toggle('sel', g === f); c.setAttribute('r', g === f ? 8 : g.prop ? 5.5 : 3); });
+    btns.forEach((b, g) => b.setAttribute('aria-pressed', g === f));
+    dotsTop.forEach((c, g) => c.setAttribute('r', g === f ? 10 : g.prop ? 7 : 4));
+    const nm = NAMES[f.type] || f.type, h = f.heard;
+    fact.innerHTML = h ? `<b>Heard</b>${h.dt > 0 ? '+' : ''}${h.dt} s from the logged pass. Speed ${h.v} m/s heard, ${f.v} logged. Closest distance ${h.km} km heard, ${f.km} km logged.`
+      : `<b>Not heard</b>${f.km} km away at closest, ${nf(f.alt_m)} m above the camera, ${f.v} m/s.${f.prop ? '' : ' A jet: the detector looks for propeller tones only.'}`;
+    if (PICS[f.type]) { img.style.opacity = 0; setTimeout(() => { img.src = `assets/${PICS[f.type]}.jpg`; img.alt = nm; img.style.opacity = 1; }, 150); }
+  }
+  /* lanes */
+  const X = t => 210 + t / 36000 * 975;
+  lanes.append(sv('rect', { class: 'ln', x: 200, y: 22, width: 995, height: 44, rx: 22 }), sv('rect', { class: 'ln', x: 200, y: 86, width: 995, height: 44, rx: 22 }),
+    sv('text', { x: 0, y: 49 }, 'Logged within 12 km'), sv('text', { x: 0, y: 113 }, 'Detector passes'),
+    ...[0, 2, 4, 6, 8, 10].map(h => sv('text', { x: X(h * 3600), y: 160, 'text-anchor': h === 10 ? 'end' : h ? 'middle' : 'start' }, `${13 + h}:00`)));
+  F.forEach(f => { const c = sv('circle', { cx: X(f.t).toFixed(1), cy: 44, r: f.prop ? 7 : 4, fill: f.heard ? '#dafa9c' : f.prop ? '#8a8a8a' : '#555', class: 'b' });
+    c.append(sv('title', {}, `${NAMES[f.type] || f.type} at ${hhmm(f.t)} UTC`)); c.addEventListener('click', () => pick(f)); lanes.append(c); dotsTop.set(f, c);
+    if (f.heard) lanes.append(sv('circle', { cx: X(f.t + f.heard.dt).toFixed(1), cy: 108, r: 7, fill: '#dafa9c' })); });
+  J.unmatched_detections.forEach(u => { const c = sv('circle', { cx: X(u.t).toFixed(1), cy: 108, r: 7, fill: '#fff' }); c.append(sv('title', {}, `Unmatched pass at ${hhmm(u.t)} UTC`)); lanes.append(c); });
+  pick(props.find(f => f.type === 'PC12') || props[0]);
+});
+
+/* footer: wavefronts of a source moving right, bunched ahead of it */
+(() => { const s = document.getElementById('footMark'); const cy = 560;
+  for (let i = 0; i < 5; i++) { const r = 540 - i * 70, cx = 520 + i * 70;
+    s.append(sv('circle', { cx, cy, r, fill: i % 2 ? '#1a1a1a' : '#dafa9c' }), sv('circle', { cx: cx + 6, cy, r: r - 30, fill: '#0f0f0f' })); } })();
 </script>
+<script src="assets/base.js"></script>
 </body>
 </html>
