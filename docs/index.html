@@ -26,7 +26,7 @@ td,th{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left}th{col
 .funnel .row{display:grid;grid-template-columns:1fr 130px;gap:10px;align-items:center;margin:6px 0;font-size:14px}
 .bar{height:10px;border-radius:6px;background:linear-gradient(90deg,var(--cyan),var(--gold));margin-top:4px}
 .num{text-align:right;font-variant-numeric:tabular-nums}
-#map{height:420px;border-radius:14px}
+#map{height:420px;border-radius:14px;background:#111}.dark-tiles{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9)}
 .ctl{display:grid;grid-template-columns:110px 1fr 70px;gap:10px;align-items:center;font-size:14px;margin:6px 0}
 input[type=range]{width:100%;accent-color:var(--gold)}
 canvas{width:100%;height:260px;border-radius:10px;background:#000}
@@ -112,7 +112,7 @@ fetch('assets/results.json').then(r=>r.json()).then(R=>{
  const s=R.top_scores, sep=((s[0]-s[1])/s[0]*100).toFixed(1);
  document.getElementById('verdict').innerHTML=`<b>No clear winner.</b> Rank 1 beats rank 2 by only ${sep}% (${s.join(' · ')}), and the top places are spread across several states. colsto's winner stood well clear of the field. Press reports name ${R.reported_area.name.replace(' (as named in press)','')}: candidates there survive every filter, and the best ranks <b>#${R.reported_area.best_rank}</b> (score ${R.reported_area.best_score}). That town was used only to grade the result, never to steer the search.`;
  const map=L.map('map',{scrollWheelZoom:false}).setView([38.5,-96],4);
- L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'© OpenStreetMap © CARTO',maxZoom:12}).addTo(map);
+ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors',maxZoom:12,className:'dark-tiles'}).addTo(map);
  T.forEach((c,i)=>L.circleMarker([c.lat,c.lon],{radius:i?6:10,color:i?'#5ee6ff':'#ffd166',weight:2,fillOpacity:.5}).bindPopup(`#${c.rank} · score ${c.score}`).addTo(map));
  window.__ev2=E.e2;
  fetch('assets/e2_track.json').then(r=>r.json()).then(p=>{window.__pts=p;draw()});
