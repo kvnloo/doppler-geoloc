@@ -57,27 +57,56 @@ pre, code, .out { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospa
 .f-white .button, .f-lime .button { background: #0f0f0f; color: #fff; }
 @media (hover: hover) { .f-white .button:hover, .f-lime .button:hover { background: #333; } }
 
-/* hero: wavefront circles bunched toward the left, cropped by the viewport */
-.hero { min-height: 100svh; overflow: hidden; display: grid; align-items: center; position: relative; }
-.hero .copy { position: relative; z-index: 2; padding-left: 8vw; max-width: 50vw; }
+/* hero: a live flyover. The canvas behind draws plane 1's wavefronts bunching ahead of it; the scope under
+   the copy reveals the real spectrogram of that pass with the fitted curve, on the same clock (hero.js). */
+.hero { --mic-x: .72; --line-y: .2; min-height: 100svh; overflow: hidden; display: grid; align-items: center; position: relative;
+  background: radial-gradient(60vw 60vw at 72% 70%, rgba(218,250,156,.06), transparent 60%), var(--soot); }
+.hero-sky { position: absolute; inset: 0; width: 100%; height: 100%; }
+.hero .copy { position: relative; z-index: 2; padding: 6rem 0 2.5rem 8vw; max-width: min(46rem, 52vw); }
 .hero h1 { font-size: var(--step-display); line-height: .92; }
-.hero .lede { font-size: 19px; margin-top: 1.6rem; max-width: 30ch; }
-.hero .button { margin-top: 2rem; }
-.hero .cap { position: absolute; z-index: 2; left: 8vw; bottom: 1.6rem; font-size: 14px; color: #a3a3a3; max-width: 40ch; }
-.waves { --D: min(110vh, 96vw); position: absolute; left: 55vw; top: calc(55% - var(--D) / 2); width: var(--D); height: var(--D); }
-.waves > * { position: absolute; border-radius: 50%; top: 50%; transform: translateY(-50%); }
-.waves .w1 { inset: 0; transform: none; background: var(--lime); }
-.waves .w2 { left: 4%; width: 82%; height: 82%; background: var(--soot); }
-.waves .w3 { left: 7.5%; width: 66%; height: 66%; overflow: hidden; background: var(--soot-2); }
-.waves .w3 img { width: 100%; height: 100%; object-fit: cover; }
-@media (max-width: 760px) {
-  .hero { align-items: start; }
-  .hero .copy { padding: 22svh 16px 0; max-width: none; }
-  .hero h1 { font-size: 11.5vw; }
-  .hero .lede { font-size: 16px; }
-  .waves { --D: 130vw; left: calc(50% - 65vw); top: 60svh; }
-  .hero .cap { display: none; }
+.hero h1 .ln { display: block; overflow: hidden; padding-bottom: .08em; margin-bottom: -.08em; }
+.hero h1 .ln > span { display: inline-block; }
+.hero .lede { font-size: 19px; margin-top: 1.6rem; max-width: 30ch; text-wrap: pretty; }
+.hero .acts { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 2rem; }
+.listen { display: inline-flex; align-items: center; gap: .65rem; min-height: 3rem; padding: 0 1.2rem 0 .45rem; border-radius: 999px;
+  border: 1px solid #333; color: #fff; font-weight: 500; transition: border-color 150ms, transform 150ms var(--ease-out); }
+.listen .pp { position: relative; width: 2.1rem; height: 2.1rem; border-radius: 50%; background: var(--lime); box-shadow: 0 0 22px rgba(218,250,156,.45); }
+.listen .pp::after { content: ""; position: absolute; left: 52%; top: 50%; transform: translate(-40%, -50%); border-style: solid; border-width: .38rem 0 .38rem .62rem; border-color: transparent transparent transparent #0f0f0f; }
+.is-playing .listen .pp::after { border: 0; width: .62rem; height: .7rem; transform: translate(-50%, -50%); left: 50%;
+  background: linear-gradient(90deg, #0f0f0f 0 35%, transparent 35% 65%, #0f0f0f 65%); }
+.is-playing .listen .pp { animation: pulse 1.1s var(--ease-out) infinite; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(218,250,156,.55); } 100% { box-shadow: 0 0 0 14px rgba(218,250,156,0); } }
+@media (hover: hover) and (pointer: fine) { .listen:hover { border-color: #666; transform: translateY(-1px); } .hero .button:hover { transform: translateY(-1px); } }
+.listen:active { transform: translateY(1px) scale(.985); }
+.scope { margin: 2.6rem 0 0; width: min(34rem, 100%); background: #141414; border: 1px solid #262626; border-radius: 18px; padding: .9rem 1rem .8rem; }
+.scope-head, .scope-foot { white-space: nowrap; display: flex; justify-content: space-between; gap: 1rem; font: 12px/1.3 ui-monospace, "SF Mono", Menlo, monospace; color: #8f8f8f; }
+.scope-head .read { display: inline-flex; gap: .9rem; align-items: baseline; font-variant-numeric: tabular-nums; }
+.scope-head .hz { color: var(--lime); font-size: 15px; font-weight: 500; min-width: 8ch; text-align: right; }
+.scope-cv { display: block; width: 100%; aspect-ratio: 700 / 240; margin: .65rem 0 .55rem; border-radius: 8px; background: #000; }
+.scope-foot i { display: inline-block; width: 14px; height: 2px; background: var(--lime); vertical-align: middle; margin-right: .45rem; box-shadow: 0 0 6px var(--lime); }
+/* entrance, once: the h1 rises line by line out of its masks, then the lead, actions and scope */
+@media (prefers-reduced-motion: no-preference) {
+  .js .hero h1 .ln > span { animation: rise 700ms cubic-bezier(.22,1,.36,1) both; }
+  .js .hero h1 .ln + .ln > span { animation-delay: 80ms; }
+  .js .hero .lede, .js .hero .acts { animation: fadeup 520ms cubic-bezier(.22,1,.36,1) both; animation-delay: 420ms; }
+  .js .hero .acts { animation-delay: 480ms; }
+  .js .hero .scope { animation: settle 900ms cubic-bezier(.22,1,.36,1) both; animation-delay: 540ms; }
+  .js .hero-sky { animation: fadein 1100ms ease-out both; }
 }
+@keyframes rise { from { transform: translateY(105%); } to { transform: none; } }
+@keyframes fadeup { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes settle { from { opacity: 0; transform: scale(.98); } to { opacity: 1; transform: none; } }
+@keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+@media (max-width: 760px), (max-width: 1100px) and (orientation: portrait) {
+  .hero { --mic-x: .5; --line-y: .5; align-items: start; background: var(--soot); }
+  .hero .copy { padding: 15svh 16px 1.25rem; max-width: none; min-height: 100svh; display: flex; flex-direction: column; }
+  .hero h1 { font-size: min(11.5vw, 88px); }
+  .hero .lede { font-size: clamp(16px, 2.4vw, 20px); }
+  .hero .acts { margin-top: 1.4rem; }
+  .hero .acts > * { min-height: 2.9rem; }
+  .scope { margin-top: auto; width: min(100%, 40rem); background: rgba(20,20,20,.88); backdrop-filter: blur(6px); }
+}
+@media (max-width: 760px) and (max-height: 700px) { .hero .copy { padding-top: 11svh; } }
 
 /* intro statement with inline circular frames */
 .statement { font-size: clamp(24px, 2.5vw, 36px); line-height: 1.18; font-weight: 500; letter-spacing: -0.02em; max-width: 30ch; }

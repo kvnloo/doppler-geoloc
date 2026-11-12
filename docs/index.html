@@ -19,13 +19,20 @@
 
 <main id="top">
 <section class="hero f-dark">
-  <div class="waves" aria-hidden="true"><i class="w1"></i><i class="w2"></i><div class="w3 shutter" data-reveal><img src="assets/hero_e1.jpg" alt="" width="1200" height="1200"></div></div>
+  <canvas class="hero-sky" aria-hidden="true"></canvas>
   <div class="copy">
-    <h1>Where was this recorded?</h1>
+    <h1><span class="ln"><span>Where was</span></span> <span class="ln"><span>this recorded?</span></span></h1>
     <p class="lede">One hour of forest audio, six ways a recording gives away its place, and two small planes nobody heard.</p>
-    <a class="button" href="#clues">Follow the clues</a>
+    <div class="acts">
+      <a class="button" href="#clues">Follow the clues</a>
+      <button class="listen" type="button" aria-pressed="false" title="A synthesized replay of the fitted Doppler curve: 17x faster, one octave up"><span class="pp" aria-hidden="true"></span><span class="lb">Hear plane 1</span></button>
+    </div>
+    <figure class="scope" role="img" aria-label="Spectrogram of the first plane: an engine tone sliding from about 190 to 80 Hz as it passes, with the fitted Doppler curve drawn over it.">
+      <div class="scope-head"><span>Plane 1 · 36 min in</span><span class="read"><span class="tt">−70 s</span><b class="hz">191.6 Hz</b></span></div>
+      <canvas class="scope-cv"></canvas>
+      <div class="scope-foot"><span>real spectrogram</span><span><i></i>fitted Doppler curve</span></div>
+    </figure>
   </div>
-  <p class="cap">Pictured: the first plane, an engine tone sliding from about 190 to 80 Hz as it passes, 36 minutes into the hour.</p>
 </section>
 
 <section class="sec intro f-white wrap">
@@ -529,5 +536,6 @@ fetch('assets/live_scope.json').then(r => r.json()).then(J => {
     s.append(sv('circle', { cx, cy, r, fill: i % 2 ? '#1a1a1a' : '#dafa9c' }), sv('circle', { cx: cx + 6, cy, r: r - 30, fill: '#0f0f0f' })); } })();
 </script>
 <script src="assets/base.js"></script>
+<script src="assets/hero.js" defer></script>
 </body>
 </html>
